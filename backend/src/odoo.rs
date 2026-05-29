@@ -1,20 +1,20 @@
-//! Minimal Odoo integration over the `odoo-api` JSON-RPC client.
+//! Minimal Odoo integration over the external JSON-RPC API (`POST /jsonrpc`).
 //!
-//! We authenticate lazily (Odoo may not be up when the backend boots) using a
-//! dedicated bot user + API key, cache the authenticated session, and expose
-//! just the one call Phase 4 needs: creating a `res.partner`.
+//! We talk to `/jsonrpc` directly (rather than the `odoo-api` crate, whose
+//! `authenticate` uses the web-session endpoint and rejects API keys): the
+//! external API's `common.authenticate` accepts an API key as the password,
+//! which is the recommended way to authenticate an integration.
+//!
+//! We authenticate lazily (Odoo may not be up at boot), cache the uid, and
+//! expose just the one call Phase 4 needs: creating a `res.partner`.
 
 use std::sync::Arc;
 
-use odoo_api::client::{Authed, ReqwestAsync};
-use odoo_api::OdooClient;
+use reqwest::Client;
 use serde_json::{json, Map, Value};
 use tokio::sync::Mutex;
 
 use crate::error::{AppError, AppResult};
-
-/// An authenticated async Odoo session.
-type OdooSession = OdooClient<Authed, ReqwestAsync>;
 
 /// Connection settings for the Odoo JSON-RPC endpoint.
 #[derive(Debug, Clone)]
@@ -22,63 +22,108 @@ pub struct OdooConfig {
     pub url: String,
     pub db: String,
     pub login: String,
-    /// API key minted for the bot user (used in place of a password).
+    /// API key minted for the user (used in place of a password).
     pub api_key: String,
 }
 
-/// Lazily-authenticated Odoo client, cheap to `clone` (shared session).
+/// Lazily-authenticated Odoo client, cheap to `clone` (shared uid cache).
 #[derive(Clone)]
 pub struct Odoo {
     config: OdooConfig,
-    session: Arc<Mutex<Option<OdooSession>>>,
+    http: Client,
+    uid: Arc<Mutex<Option<i64>>>,
 }
 
 impl Odoo {
     pub fn new(config: OdooConfig) -> Self {
         Self {
             config,
-            session: Arc::new(Mutex::new(None)),
+            http: Client::new(),
+            uid: Arc::new(Mutex::new(None)),
         }
     }
 
-    /// Ensure the cached session is authenticated, (re)authenticating if absent.
-    async fn ensure_session(&self, slot: &mut Option<OdooSession>) -> AppResult<()> {
-        if slot.is_some() {
-            return Ok(());
-        }
-        let client = OdooClient::new_reqwest_async(&self.config.url)
-            .map_err(|e| AppError::Internal(format!("odoo connect failed: {e}")))?
-            .authenticate(&self.config.db, &self.config.login, &self.config.api_key)
+    /// Issue a JSON-RPC `call` and return its `result`, surfacing Odoo errors.
+    async fn call(&self, service: &str, method: &str, args: Vec<Value>) -> AppResult<Value> {
+        let body = json!({
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": { "service": service, "method": method, "args": args },
+        });
+        let resp = self
+            .http
+            .post(format!("{}/jsonrpc", self.config.url))
+            .json(&body)
+            .send()
             .await
-            .map_err(|e| AppError::Internal(format!("odoo authentication failed: {e}")))?;
-        *slot = Some(client);
-        Ok(())
+            .map_err(|e| AppError::Internal(format!("odoo request failed: {e}")))?;
+
+        let mut payload: Value = resp
+            .json()
+            .await
+            .map_err(|e| AppError::Internal(format!("odoo decode failed: {e}")))?;
+
+        if let Some(err) = payload.get("error") {
+            return Err(AppError::Internal(format!("odoo json-rpc error: {err}")));
+        }
+        Ok(payload["result"].take())
+    }
+
+    /// Authenticate (once) and return the cached uid.
+    async fn uid(&self) -> AppResult<i64> {
+        let mut slot = self.uid.lock().await;
+        if let Some(uid) = *slot {
+            return Ok(uid);
+        }
+        let result = self
+            .call(
+                "common",
+                "authenticate",
+                vec![
+                    json!(self.config.db),
+                    json!(self.config.login),
+                    json!(self.config.api_key),
+                    json!({}),
+                ],
+            )
+            .await?;
+        // Odoo returns the uid on success, or `false` when credentials are bad.
+        let uid = result.as_i64().filter(|v| *v > 0).ok_or_else(|| {
+            AppError::Internal(format!(
+                "odoo authentication failed (login/api key rejected): {result}"
+            ))
+        })?;
+        *slot = Some(uid);
+        Ok(uid)
     }
 
     /// Create a `res.partner` and return its Odoo id.
     pub async fn create_partner(&self, name: &str, email: Option<&str>) -> AppResult<i32> {
-        let mut slot = self.session.lock().await;
-        self.ensure_session(&mut slot).await?;
-        let client = slot.as_mut().expect("session ensured above");
+        let uid = self.uid().await?;
 
         let mut fields = Map::new();
         fields.insert("name".into(), json!(name));
         if let Some(email) = email {
             fields.insert("email".into(), json!(email));
         }
-        let args: Vec<Value> = vec![Value::Object(fields)];
 
-        let resp = client
-            .execute_kw("res.partner", "create", args, Map::new())
-            .send()
-            .await
-            .map_err(|e| AppError::Internal(format!("odoo create_partner failed: {e}")))?;
+        let result = self
+            .call(
+                "object",
+                "execute_kw",
+                vec![
+                    json!(self.config.db),
+                    json!(uid),
+                    json!(self.config.api_key),
+                    json!("res.partner"),
+                    json!("create"),
+                    json!([Value::Object(fields)]),
+                ],
+            )
+            .await?;
 
-        resp.data.as_i64().map(|id| id as i32).ok_or_else(|| {
-            AppError::Internal(format!(
-                "odoo create_partner: unexpected response {:?}",
-                resp.data
-            ))
+        result.as_i64().map(|id| id as i32).ok_or_else(|| {
+            AppError::Internal(format!("odoo create_partner unexpected response: {result}"))
         })
     }
 }

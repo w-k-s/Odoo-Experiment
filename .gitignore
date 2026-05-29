@@ -1,7 +1,8 @@
 # ---- Secrets / local overrides ----
-# Keep the committed *.env.example templates; ignore real local env files.
+# Keep the committed *.example templates; ignore real local + docker env files.
 .env
 .env.local
+.env.docker
 *.local
 
 # ---- Database volumes (bind-mounted Postgres data) ----
@@ -15,6 +16,7 @@
 **/node_modules/
 **/dist/
 **/dist-ssr/
+*.tsbuildinfo
 
 # ---- Editor / OS ----
 .DS_Store

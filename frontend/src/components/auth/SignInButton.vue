@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { useAuth0 } from "@auth0/auth0-vue";
+import { useLogin } from "@/composables/useLogin";
 import AppButton from "@/components/ui/AppButton.vue";
 
-const { loginWithRedirect } = useAuth0();
+const { signIn } = useLogin();
 </script>
 
 <template>
-  <AppButton variant="primary" @click="loginWithRedirect()">Sign in</AppButton>
+  <AppButton variant="primary" @click="signIn">Continue with Google</AppButton>
 </template>

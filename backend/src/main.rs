@@ -27,8 +27,6 @@ pub struct AppState {
     pub pool: Pool,
     /// Program members enrol in when a request omits an explicit `program_id`.
     pub default_program_id: String,
-    /// Auth0 tenant domain (used for the `/userinfo` lookup).
-    pub auth0_domain: String,
     /// Lazily-authenticated Odoo client.
     pub odoo: Odoo,
 }
@@ -68,7 +66,6 @@ async fn main() {
     let state = AppState {
         pool,
         default_program_id,
-        auth0_domain: config.auth0_domain.clone(),
         odoo: Odoo::new(config.odoo.clone()),
     };
 

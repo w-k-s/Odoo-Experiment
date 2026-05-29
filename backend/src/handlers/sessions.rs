@@ -1,11 +1,11 @@
 use axum::extract::{Path, State};
-use axum::http::{HeaderMap, StatusCode};
+use axum::http::StatusCode;
 use axum::Json;
 use chrono::{Duration, Utc};
 use diesel::prelude::*;
 use jwt_authorizer::JwtClaims;
 
-use crate::auth::{bearer_token, fetch_userinfo, Claims};
+use crate::auth::Claims;
 use crate::error::{AppError, AppResult};
 use crate::handlers::members::{ensure_member, find_member_by_sub};
 use crate::ids::new_session_code;
@@ -23,12 +23,9 @@ const SESSION_TTL_HOURS: i64 = 24;
 pub async fn create_session(
     State(state): State<AppState>,
     JwtClaims(claims): JwtClaims<Claims>,
-    headers: HeaderMap,
 ) -> AppResult<(StatusCode, Json<Session>)> {
-    let token = bearer_token(&headers)?;
-    let info = fetch_userinfo(&state.auth0_domain, token).await?;
-    let name = info.name.unwrap_or_else(|| "Member".to_string());
-    let member = ensure_member(&state, &claims.sub, &name, info.email.as_deref()).await?;
+    let name = claims.name.clone().unwrap_or_else(|| "Member".to_string());
+    let member = ensure_member(&state, &claims.sub, &name, claims.email.as_deref()).await?;
 
     let new = NewSession {
         id: new_session_code(),

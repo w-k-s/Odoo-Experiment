@@ -75,20 +75,9 @@ services:
     depends_on:
       loyalty-postgres:
         condition: service_healthy
-    environment:
-      DATABASE_URL: postgres://loyalty:loyalty_password@loyalty-postgres:5432/loyalty
-      BIND_ADDR: 0.0.0.0:8000
-      POOL_MAX_SIZE: "8"
-      BOOTSTRAP_PROGRAM_NAME: UAE Bakery Rewards
-      RUST_LOG: info,loyalty_backend=debug
-      # Auth0 — verifies access tokens for the loyalty API audience.
-      AUTH0_DOMAIN: wks-bakery.eu.auth0.com
-      AUTH0_AUDIENCE: https://loyalty-api
-      # Odoo JSON-RPC — set ODOO_API_KEY to the bot user's API key (see backend README).
-      ODOO_URL: http://odoo:8069
-      ODOO_DB: odoo
-      ODOO_LOGIN: loyalty-bot
-      ODOO_API_KEY: ${ODOO_API_KEY:-}
+    # Docker-specific env (in-network addresses + secrets); gitignored.
+    # Use backend/.env for local non-docker runs instead.
+    env_file: ./backend/.env.docker
     ports:
       - "8000:8000"
 
@@ -100,7 +89,7 @@ services:
       args:
         VITE_AUTH0_DOMAIN: wks-bakery.eu.auth0.com
         VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID:-jrvgFWjBsJQVleaJuVumT2NAffwZDQzv}
-        VITE_AUTH0_AUDIENCE: https://loyalty-api
+        VITE_AUTH0_AUDIENCE: https://wks-bakery.eu.auth0.com/api/v2/
         VITE_API_BASE: http://localhost:8000
     restart: unless-stopped
     depends_on:

@@ -17,10 +17,7 @@ deadpool-diesel = { version = "0.6", features = ["postgres"] }
 # Auth: Auth0 JWT verification (JWKS layer + claims extractor for axum)
 jwt-authorizer = "0.15"
 
-# Odoo: JSON-RPC client (async via reqwest)
-odoo-api = { version = "0.2", default-features = false, features = ["async"] }
-
-# HTTP client (Auth0 /userinfo lookup)
+# HTTP client (Odoo JSON-RPC calls)
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 
 # Serialization

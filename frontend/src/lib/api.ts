@@ -23,9 +23,18 @@ export interface SessionDetail {
   member: { name: string; email: string | null };
 }
 
-/** Fetch with the caller's Auth0 access token attached. Does not throw on status. */
+/** The raw ID-token JWT (used as the bearer for our API — POC). */
+async function idToken(): Promise<string> {
+  // Refresh the session so the ID token isn't stale, then read its raw JWT.
+  await auth0.checkSession();
+  const raw = auth0.idTokenClaims.value?.__raw;
+  if (!raw) throw new Error("not authenticated");
+  return raw;
+}
+
+/** Fetch with the caller's Auth0 ID token attached. Does not throw on status. */
 async function request(path: string, init: RequestInit = {}): Promise<Response> {
-  const token = await auth0.getAccessTokenSilently();
+  const token = await idToken();
   return fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
