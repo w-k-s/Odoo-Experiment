@@ -1,0 +1,109 @@
+services:
+  odoo-postgres:
+    container_name: odoo-postgres
+    image: postgres:17.2-alpine3.21
+    restart: unless-stopped
+    env_file: ./odoo/.pg.env
+    user: root
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 60s
+      retries: 10
+    volumes:
+      - ./odoo/pg-data:/var/lib/postgresql/data
+
+  # One-shot service: initializes the odoo database (installs base + desired
+  # modules) then exits. Runs before the main odoo service starts.
+  odoo-init:
+    container_name: odoo-init
+    image: odoo:18.0-20250218
+    user: root
+    depends_on:
+      odoo-postgres:
+        condition: service_healthy
+    restart: "no"
+    command: odoo -c /etc/odoo/odoo.conf -d odoo -i base --without-demo=all --stop-after-init
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./odoo/addons:/mnt/addons
+      - ./odoo/etc:/etc/odoo
+
+  odoo:
+    container_name: odoo
+    image: odoo:18.0-20250218
+    restart: unless-stopped
+    user: root
+    depends_on:
+      odoo-postgres:
+        condition: service_healthy
+      odoo-init:
+        condition: service_completed_successfully
+    tty: true
+    command: --
+    ports:
+      - "8069:8069"
+    volumes:
+      # - ./entrypoint.sh:/entrypoint.sh   # if you want to install additional Python packages, uncomment this line!
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./odoo/addons:/mnt/addons
+      - ./odoo/etc:/etc/odoo
+
+  # ---- Loyalty backend (Phase 3) ----
+  loyalty-postgres:
+    container_name: loyalty-postgres
+    image: postgres:17.2-alpine3.21
+    restart: unless-stopped
+    env_file: ./backend/loyalty.pg.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "loyalty"]
+      interval: 5s
+      timeout: 60s
+      retries: 10
+    ports:
+      # Exposed on 5433 to avoid clashing with the odoo postgres.
+      - "5433:5432"
+    volumes:
+      - ./backend/pg-data:/var/lib/postgresql/data
+
+  loyalty-backend:
+    container_name: loyalty-backend
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      loyalty-postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://loyalty:loyalty_password@loyalty-postgres:5432/loyalty
+      BIND_ADDR: 0.0.0.0:8000
+      POOL_MAX_SIZE: "8"
+      BOOTSTRAP_PROGRAM_NAME: UAE Bakery Rewards
+      RUST_LOG: info,loyalty_backend=debug
+      # Auth0 — verifies access tokens for the loyalty API audience.
+      AUTH0_DOMAIN: wks-bakery.eu.auth0.com
+      AUTH0_AUDIENCE: https://loyalty-api
+      # Odoo JSON-RPC — set ODOO_API_KEY to the bot user's API key (see backend README).
+      ODOO_URL: http://odoo:8069
+      ODOO_DB: odoo
+      ODOO_LOGIN: loyalty-bot
+      ODOO_API_KEY: ${ODOO_API_KEY:-}
+    ports:
+      - "8000:8000"
+
+  # ---- Loyalty member PWA (Phase 4) ----
+  loyalty-pwa:
+    container_name: loyalty-pwa
+    build:
+      context: ./frontend
+      args:
+        VITE_AUTH0_DOMAIN: wks-bakery.eu.auth0.com
+        VITE_AUTH0_CLIENT_ID: ${VITE_AUTH0_CLIENT_ID:-jrvgFWjBsJQVleaJuVumT2NAffwZDQzv}
+        VITE_AUTH0_AUDIENCE: https://loyalty-api
+        VITE_API_BASE: http://localhost:8000
+    restart: unless-stopped
+    depends_on:
+      - loyalty-backend
+    ports:
+      - "8080:80"

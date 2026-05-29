@@ -1,0 +1,11 @@
+# Rust build artifacts
+/target
+
+# Backtraces
+*.bak
+
+# Environment overrides (keep .env.example committed, ignore real secrets)
+.env
+
+# macOS
+.DS_Store

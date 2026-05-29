@@ -1,0 +1,41 @@
+[package]
+name = "loyalty-backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Web framework
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.6", features = ["trace", "cors"] }
+
+# Database: Diesel (sync) + deadpool for async connection pooling
+diesel = { version = "2.2", features = ["postgres", "chrono"] }
+diesel_migrations = "2.2"
+deadpool-diesel = { version = "0.6", features = ["postgres"] }
+
+# Auth: Auth0 JWT verification (JWKS layer + claims extractor for axum)
+jwt-authorizer = "0.15"
+
+# Odoo: JSON-RPC client (async via reqwest)
+odoo-api = { version = "0.2", default-features = false, features = ["async"] }
+
+# HTTP client (Auth0 /userinfo lookup)
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# ID generation
+nanoid = "0.4"
+
+# Types
+chrono = { version = "0.4", features = ["serde"] }
+
+# Utilities
+dotenvy = "0.15"
+
+# Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

@@ -1,0 +1,26 @@
+# ---- Secrets / local overrides ----
+# Keep the committed *.env.example templates; ignore real local env files.
+.env
+.env.local
+*.local
+
+# ---- Database volumes (bind-mounted Postgres data) ----
+**/pg-data/
+
+# ---- Rust ----
+**/target/
+*.bak
+
+# ---- Node / frontend ----
+**/node_modules/
+**/dist/
+**/dist-ssr/
+
+# ---- Editor / OS ----
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# ---- Claude Code local settings ----
+.claude/settings.local.json
