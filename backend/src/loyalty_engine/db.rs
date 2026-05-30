@@ -1,8 +1,10 @@
-use deadpool_diesel::postgres::{Manager, Pool, Runtime};
-use diesel::pg::PgConnection;
+use deadpool_diesel::postgres::{Manager, Runtime};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
-use crate::error::{AppError, AppResult};
+use crate::loyalty_engine::error::{EngineError, EngineResult};
+
+/// The connection pool type, re-exported so callers don't depend on deadpool.
+pub use deadpool_diesel::postgres::Pool;
 
 /// Migrations embedded at compile time from the `migrations/` directory.
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
@@ -17,16 +19,13 @@ pub fn build_pool(database_url: &str, max_size: usize) -> Pool {
 }
 
 /// Run any pending migrations on startup.
-pub async fn run_migrations(pool: &Pool) -> AppResult<()> {
+pub async fn run_migrations(pool: &Pool) -> EngineResult<()> {
     let conn = pool.get().await?;
     conn.interact(|conn| {
         conn.run_pending_migrations(MIGRATIONS)
             .map(|_| ())
-            .map_err(|e| AppError::Internal(format!("migration failed: {e}")))
+            .map_err(|e| EngineError::Db(format!("migration failed: {e}")))
     })
     .await??;
     Ok(())
 }
-
-/// Helper alias for the kind of connection `interact` hands the closure.
-pub type DbConn = PgConnection;

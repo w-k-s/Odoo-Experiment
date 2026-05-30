@@ -1,4 +1,12 @@
-use crate::odoo::OdooConfig;
+/// Connection settings for the Odoo JSON-RPC endpoint.
+#[derive(Debug, Clone)]
+pub struct OdooConfig {
+    pub url: String,
+    pub db: String,
+    pub login: String,
+    /// API key minted for the user (used in place of a password).
+    pub api_key: String,
+}
 
 /// Runtime configuration, read from environment variables.
 pub struct Config {
@@ -9,7 +17,7 @@ pub struct Config {
     pub bootstrap_program_name: String,
     /// Auth0 tenant domain, e.g. `wks-bakery.eu.auth0.com`.
     pub auth0_domain: String,
-    /// Auth0 API identifier (audience) the access tokens are issued for.
+    /// Auth0 audience the tokens are issued for (the SPA client id for ID-token auth).
     pub auth0_audience: String,
     /// Odoo JSON-RPC connection settings.
     pub odoo: OdooConfig,
@@ -29,7 +37,7 @@ impl Config {
 
         let auth0_domain = std::env::var("AUTH0_DOMAIN").expect("AUTH0_DOMAIN must be set");
         let auth0_audience =
-            std::env::var("AUTH0_AUDIENCE").unwrap_or_else(|_| "https://loyalty-api".to_string());
+            std::env::var("AUTH0_AUDIENCE").expect("AUTH0_AUDIENCE must be set");
 
         let odoo = OdooConfig {
             url: std::env::var("ODOO_URL").unwrap_or_else(|_| "http://odoo:8069".to_string()),

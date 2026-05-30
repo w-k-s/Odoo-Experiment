@@ -2,7 +2,7 @@
 //!
 //! JWT verification is delegated to `jwt-authorizer`: we build an `Authorizer`
 //! from Auth0's JWKS endpoint and mount it as a tower layer on the protected
-//! routes (see `main.rs`). Handlers then extract `JwtClaims<Claims>`.
+//! routes (see `middleware::router`). Handlers then extract `JwtClaims<Claims>`.
 //!
 //! POC note: the PWA authenticates with the **ID token** (audience = the SPA
 //! client id), which carries the member's `name`/`email`/`sub` — so we read the

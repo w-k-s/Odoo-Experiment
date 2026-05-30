@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-use crate::schema::{loyalty_members, loyalty_programs, loyalty_sessions};
+use crate::loyalty_engine::schema::{loyalty_members, loyalty_programs, loyalty_sessions};
 
 // ---------- Programs ----------
 
@@ -19,11 +19,6 @@ pub struct Program {
 #[diesel(table_name = loyalty_programs)]
 pub struct NewProgram {
     pub id: String,
-    pub name: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateProgram {
     pub name: String,
 }
 
@@ -54,14 +49,6 @@ pub struct NewMember {
     pub external_contact_id: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct CreateMember {
-    /// Optional: defaults to the bootstrapped program when omitted.
-    pub program_id: Option<String>,
-    pub name: String,
-    pub email: Option<String>,
-}
-
 // ---------- Sessions ----------
 
 #[derive(Debug, Clone, Queryable, Selectable, Serialize)]
@@ -83,39 +70,11 @@ pub struct NewSession {
     pub expires_at: Option<DateTime<Utc>>,
 }
 
-// ---------- API response shapes ----------
-
-/// Member subset embedded in a session lookup (what the POS consumes).
-#[derive(Debug, Serialize)]
-pub struct SessionMember {
-    pub name: String,
-    pub email: Option<String>,
-}
-
-/// Response for `GET /loyalty/sessions/{id}`.
-#[derive(Debug, Serialize)]
-pub struct SessionDetail {
+/// A session resolved together with its owning member and effective status.
+/// Returned by `SessionService::get_owned`; the middleware maps it to its DTO.
+#[derive(Debug)]
+pub struct OwnedSession {
     pub session_id: String,
     pub status: String,
-    pub member: SessionMember,
-}
-
-/// Response for `GET /loyalty/me` — the authenticated member's profile + balance.
-#[derive(Debug, Serialize)]
-pub struct MemberProfile {
-    pub member_id: String,
-    pub name: String,
-    pub email: Option<String>,
-    pub points: i32,
-}
-
-impl From<Member> for MemberProfile {
-    fn from(m: Member) -> Self {
-        Self {
-            member_id: m.id,
-            name: m.name,
-            email: m.email,
-            points: m.points,
-        }
-    }
+    pub member: Member,
 }

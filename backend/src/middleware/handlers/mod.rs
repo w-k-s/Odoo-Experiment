@@ -1,6 +1,7 @@
 pub mod me;
 pub mod members;
 pub mod programs;
+pub mod provisioning;
 pub mod sessions;
 
 use axum::Json;

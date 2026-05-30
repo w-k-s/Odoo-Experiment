@@ -6,7 +6,7 @@
 //! which is the recommended way to authenticate an integration.
 //!
 //! We authenticate lazily (Odoo may not be up at boot), cache the uid, and
-//! expose just the one call Phase 4 needs: creating a `res.partner`.
+//! expose just the one call Phase 4 needs: creating a contact (`res.partner`).
 
 use std::sync::Arc;
 
@@ -14,17 +14,8 @@ use reqwest::Client;
 use serde_json::{json, Map, Value};
 use tokio::sync::Mutex;
 
-use crate::error::{AppError, AppResult};
-
-/// Connection settings for the Odoo JSON-RPC endpoint.
-#[derive(Debug, Clone)]
-pub struct OdooConfig {
-    pub url: String,
-    pub db: String,
-    pub login: String,
-    /// API key minted for the user (used in place of a password).
-    pub api_key: String,
-}
+use crate::config::OdooConfig;
+use crate::middleware::error::{AppError, AppResult};
 
 /// Lazily-authenticated Odoo client, cheap to `clone` (shared uid cache).
 #[derive(Clone)]
@@ -97,8 +88,8 @@ impl Odoo {
         Ok(uid)
     }
 
-    /// Create a `res.partner` and return its Odoo id.
-    pub async fn create_partner(&self, name: &str, email: Option<&str>) -> AppResult<i32> {
+    /// Create a contact (`res.partner`) and return its Odoo id.
+    pub async fn create_contact(&self, name: &str, email: Option<&str>) -> AppResult<i32> {
         let uid = self.uid().await?;
 
         let mut fields = Map::new();
@@ -123,7 +114,7 @@ impl Odoo {
             .await?;
 
         result.as_i64().map(|id| id as i32).ok_or_else(|| {
-            AppError::Internal(format!("odoo create_partner unexpected response: {result}"))
+            AppError::Internal(format!("odoo create_contact unexpected response: {result}"))
         })
     }
 }

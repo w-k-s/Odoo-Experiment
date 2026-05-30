@@ -1,35 +1,16 @@
 use std::net::SocketAddr;
 
-use axum::routing::{get, post};
-use axum::Router;
-use deadpool_diesel::postgres::Pool;
-use jwt_authorizer::IntoLayer;
-use tower_http::cors::CorsLayer;
-use tower_http::trace::TraceLayer;
-
-mod auth;
-mod bootstrap;
 mod config;
-mod db;
-mod error;
-mod handlers;
-mod ids;
-mod models;
-mod odoo;
-mod schema;
+mod loyalty_engine;
+mod middleware;
 
 use config::Config;
-use odoo::Odoo;
-
-/// Shared application state handed to every handler.
-#[derive(Clone)]
-pub struct AppState {
-    pub pool: Pool,
-    /// Program members enrol in when a request omits an explicit `program_id`.
-    pub default_program_id: String,
-    /// Lazily-authenticated Odoo client.
-    pub odoo: Odoo,
-}
+use loyalty_engine::db;
+use loyalty_engine::services::members::MemberService;
+use loyalty_engine::services::programs::ProgramService;
+use loyalty_engine::services::sessions::SessionService;
+use middleware::integrations::odoo::Odoo;
+use middleware::state::AppState;
 
 #[tokio::main]
 async fn main() {
@@ -45,48 +26,40 @@ async fn main() {
 
     let config = Config::from_env();
 
+    // ---- loyalty_engine: datastore + services ----
     let pool = db::build_pool(&config.database_url, config.pool_max_size);
-
     db::run_migrations(&pool)
         .await
         .expect("failed to run migrations");
 
-    let default_program_id =
-        bootstrap::ensure_default_program(&pool, &config.bootstrap_program_name)
-            .await
-            .expect("failed to bootstrap default program");
+    let programs = ProgramService::new(pool.clone());
+    let members = MemberService::new(pool.clone());
+    let sessions = SessionService::new(pool.clone());
+
+    let default_program_id = programs
+        .ensure_default(&config.bootstrap_program_name)
+        .await
+        .expect("failed to bootstrap default program");
     tracing::info!(
         program_id = %default_program_id,
         name = %config.bootstrap_program_name,
         "default loyalty program ready"
     );
 
-    let authorizer = auth::build_authorizer(&config.auth0_domain, &config.auth0_audience).await;
+    // ---- middleware: integrations + auth + router ----
+    let odoo = Odoo::new(config.odoo.clone());
+    let authorizer =
+        middleware::auth::build_authorizer(&config.auth0_domain, &config.auth0_audience).await;
 
     let state = AppState {
-        pool,
+        programs,
+        members,
+        sessions,
+        odoo,
         default_program_id,
-        odoo: Odoo::new(config.odoo.clone()),
     };
 
-    // Routes requiring a verified Auth0 access token.
-    let protected = Router::new()
-        .route("/loyalty/me", get(handlers::me::me))
-        .route("/loyalty/sessions", post(handlers::sessions::create_session))
-        .route("/loyalty/sessions/:id", get(handlers::sessions::get_session))
-        .layer(authorizer.into_layer());
-
-    // Public / admin routes.
-    let public = Router::new()
-        .route("/health", get(handlers::health))
-        .route("/loyalty/programs", post(handlers::programs::create_program))
-        .route("/loyalty/members", post(handlers::members::create_member));
-
-    let app = public
-        .merge(protected)
-        .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::permissive())
-        .with_state(state);
+    let app = middleware::router(state, authorizer);
 
     let addr: SocketAddr = config
         .bind_addr

@@ -3,14 +3,14 @@ use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde_json::json;
 
-/// Application-wide error type. Hand-rolled (no thiserror) so the dependency
-/// surface stays small.
+use crate::loyalty_engine::error::EngineError;
+
+/// HTTP-facing error type. Hand-rolled (no thiserror) so the dependency surface
+/// stays small. Engine/integration errors are mapped into these.
 #[derive(Debug)]
 pub enum AppError {
     NotFound(String),
-    BadRequest(String),
-    Unauthorized(String),
-    /// Anything we don't want to leak details about (DB, pool, interact join).
+    /// Anything we don't want to leak details about (DB, pool, integrations).
     Internal(String),
 }
 
@@ -18,8 +18,6 @@ impl AppError {
     fn parts(&self) -> (StatusCode, &str) {
         match self {
             AppError::NotFound(m) => (StatusCode::NOT_FOUND, m.as_str()),
-            AppError::BadRequest(m) => (StatusCode::BAD_REQUEST, m.as_str()),
-            AppError::Unauthorized(m) => (StatusCode::UNAUTHORIZED, m.as_str()),
             AppError::Internal(m) => (StatusCode::INTERNAL_SERVER_ERROR, m.as_str()),
         }
     }
@@ -44,26 +42,13 @@ impl IntoResponse for AppError {
     }
 }
 
-// ---- Conversions from lower-level errors into a 500 (details logged) ----
-
-impl From<diesel::result::Error> for AppError {
-    fn from(e: diesel::result::Error) -> Self {
+/// Map domain errors onto HTTP responses.
+impl From<EngineError> for AppError {
+    fn from(e: EngineError) -> Self {
         match e {
-            diesel::result::Error::NotFound => AppError::NotFound("not found".into()),
-            other => AppError::Internal(format!("db error: {other}")),
+            EngineError::NotFound(m) => AppError::NotFound(m),
+            EngineError::Db(m) => AppError::Internal(m),
         }
-    }
-}
-
-impl From<deadpool_diesel::PoolError> for AppError {
-    fn from(e: deadpool_diesel::PoolError) -> Self {
-        AppError::Internal(format!("pool error: {e}"))
-    }
-}
-
-impl From<deadpool_diesel::InteractError> for AppError {
-    fn from(e: deadpool_diesel::InteractError) -> Self {
-        AppError::Internal(format!("interact error: {e}"))
     }
 }
 
