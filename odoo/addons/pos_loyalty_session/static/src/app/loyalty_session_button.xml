@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_loyalty_session.LoyaltySessionButton">
+        <button class="btn btn-secondary btn-lg py-5" t-on-click="onClick">
+            <i class="fa fa-gift me-1" role="img" aria-label="Loyalty code" title="Loyalty code" />
+            <t t-if="currentOrder?.loyalty_session_code">
+                <t t-esc="currentOrder.loyalty_session_code" />
+            </t>
+            <t t-else="">Loyalty Code</t>
+        </button>
+    </t>
+</templates>

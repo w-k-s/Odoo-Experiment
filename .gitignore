@@ -5,6 +5,8 @@
 .env.docker
 *.local
 
+**/__pycache__/
+
 # ---- Data volumes (bind-mounted) ----
 **/pg-data/
 **/kafka/data/

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="pos_loyalty_session.ControlButtons"
+       t-inherit="point_of_sale.ControlButtons"
+       t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('o_pricelist_button')]" position="before">
+            <LoyaltySessionButton />
+        </xpath>
+    </t>
+</templates>

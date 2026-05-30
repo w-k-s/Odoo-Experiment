@@ -150,6 +150,7 @@ class PosOrder(models.Model):
              "captured downstream via CDC (Debezium).",
     )
 
+    # Don't do this in odoo 18 and above: https://www.odoo.com/forum/help-1/how-to-include-a-custom-posorder-field-in-orderreceipt-frontend-template-odoo-18-294122
     @api.model
     def _load_pos_data_fields(self, config_id):
         # Append our field to the list the POS frontend loads, so it is read
