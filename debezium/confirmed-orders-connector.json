@@ -1,0 +1,35 @@
+{
+  "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+  "tasks.max": "1",
+
+  "database.hostname": "odoo-postgres",
+  "database.port": "5432",
+  "database.user": "odoo",
+  "database.password": "odoo_password",
+  "database.dbname": "odoo",
+  "topic.prefix": "odoo",
+
+  "plugin.name": "pgoutput",
+  "slot.name": "debezium_orders",
+  "publication.name": "dbz_orders",
+  "publication.autocreate.mode": "filtered",
+  "table.include.list": "public.pos_order",
+
+  "snapshot.mode": "no_data",
+  "tombstones.on.delete": "false",
+
+  "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+  "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+  "key.converter.schemas.enable": "false",
+  "value.converter.schemas.enable": "false",
+
+  "transforms": "filterConfirmed,route",
+
+  "transforms.filterConfirmed.type": "io.debezium.transforms.Filter",
+  "transforms.filterConfirmed.language": "jsr223.groovy",
+  "transforms.filterConfirmed.condition": "value != null && value.after != null && (value.after.state == 'paid' || value.after.state == 'done' || value.after.state == 'invoiced')",
+
+  "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+  "transforms.route.regex": ".*",
+  "transforms.route.replacement": "confirmed-orders"
+}

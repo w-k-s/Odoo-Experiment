@@ -5,8 +5,9 @@
 .env.docker
 *.local
 
-# ---- Database volumes (bind-mounted Postgres data) ----
+# ---- Data volumes (bind-mounted) ----
 **/pg-data/
+**/kafka/data/
 
 # ---- Rust ----
 **/target/

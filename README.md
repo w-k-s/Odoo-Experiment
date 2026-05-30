@@ -44,11 +44,18 @@ A distributed system integrating Odoo POS with a loyalty platform using Kafka, D
   - Test that both the session code and the customer persist on the posted order
 
 ### Phase 6: Event Capture (Moderate-to-Hard)
-- [ ] **Set up Debezium PostgreSQL CDC**
-  - Capture `pos_order` rows once an order is **posted**
-  - Ensure `loyalty_session_code` + customer (`partner_id`) are on the row
-  - Consider the outbox pattern for clean, commit-time event semantics
-  - Test WAL streaming to Kafka
+- [x] **Kafka + Debezium PostgreSQL CDC**
+  - Kafka (KRaft, no Zookeeper) + Kafbat UI in compose (`kafka`, `kafka-ui` on
+    `localhost:8081`); `odoo-postgres` runs with `wal_level=logical`
+  - Debezium captures `public.pos_order` via `pgoutput`; a Groovy `Filter` SMT
+    keeps only **confirmed** orders (`state` in `paid`/`done`/`invoiced`) and a
+    `RegexRouter` sends them to the **`confirmed-orders`** topic
+  - Connector config in `debezium/confirmed-orders-connector.json`, auto-registered
+    by the `debezium-init` service (custom `debezium/Dockerfile` adds Groovy)
+  - Verified: flipping a `pos_order` to `paid` emits one message on
+    `confirmed-orders`; `draft` is filtered out
+  - _Still open: surfacing `loyalty_session_code` + `partner_id` on the row
+    (Phase 5) and the outbox pattern as a future hardening_
 
 ### Phase 7: Event Processing (Easy-to-Moderate)
 - [ ] **Build KFunc/transform service**
