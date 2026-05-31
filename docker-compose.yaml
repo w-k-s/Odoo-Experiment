@@ -51,6 +51,7 @@ services:
         condition: service_completed_successfully
     tty: true
     command: --
+    env_file: ./odoo/.env.docker
     ports:
       - "8069:8069"
     volumes:

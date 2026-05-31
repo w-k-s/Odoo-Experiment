@@ -1,4 +1,5 @@
 import logging
+import os
 
 import requests
 
@@ -11,6 +12,7 @@ _logger = logging.getLogger(__name__)
 # Override at runtime with the `loyalty.base_url` system parameter
 # (Settings ▸ Technical ▸ System Parameters) without touching code.
 DEFAULT_LOYALTY_BASE_URL = "http://loyalty-backend:8000"
+DEFAULT_LOYALTY_AUTH_URL = "https://wks-bakery.eu.auth0.com/oauth/token"
 
 
 class PosOrder(models.Model):
@@ -35,16 +37,60 @@ class PosOrder(models.Model):
         if not code:
             return {"session_code": "", "partner_id": False}
 
-        # TODO: Request client credentials
         base_url = (
             self.env["ir.config_parameter"]
             .sudo()
             .get_param("loyalty.base_url", DEFAULT_LOYALTY_BASE_URL)
         )
+
+        auth_url = (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("loyalty.auth_url", DEFAULT_LOYALTY_AUTH_URL)
+        )
+
         url = f"{base_url.rstrip('/')}/loyalty/sessions/{code}"
 
+        client_id = os.environ.get("LOYALTY_AUTH_CLIENT_ID")
+        client_secret = os.environ.get("LOYALTY_AUTH_CLIENT_SECRET")
+        audience = os.environ.get("LOYALTY_AUTH_AUDIENCE")
+        missing = [
+            name
+            for name, value in (
+                ("LOYALTY_AUTH_CLIENT_ID", client_id),
+                ("LOYALTY_AUTH_CLIENT_SECRET", client_secret),
+                ("LOYALTY_AUTH_AUDIENCE", audience),
+            )
+            if not value
+        ]
+        if missing:
+            _logger.error(
+                "Loyalty auth misconfigured; missing env vars: %s", ", ".join(missing)
+            )
+            raise UserError(
+                _("Loyalty service is not configured. Please contact your administrator.")
+            )
+
         try:
-            resp = requests.get(url, timeout=5)
+            token_response = requests.post(
+                url=auth_url,
+                json={
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "audience": audience,
+                    "grant_type": "client_credentials",
+                },
+                timeout=5,
+            )
+
+            token_response.raise_for_status()
+            token_json = token_response.json()
+
+            access_token = token_json.get("access_token")
+
+            resp = requests.get(
+                url, headers={"Authorization": f"Bearer {access_token}"}, timeout=5
+            )
             resp.raise_for_status()
             data = resp.json()
         except requests.exceptions.Timeout:
