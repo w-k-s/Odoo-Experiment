@@ -68,7 +68,9 @@ class PosOrder(models.Model):
                 "Loyalty auth misconfigured; missing env vars: %s", ", ".join(missing)
             )
             raise UserError(
-                _("Loyalty service is not configured. Please contact your administrator.")
+                _(
+                    "Loyalty service is not configured. Please contact your administrator."
+                )
             )
 
         try:
@@ -100,22 +102,13 @@ class PosOrder(models.Model):
             raise UserError(_("Could not resolve loyalty session '%s'.") % code)
 
         member = data.get("member") or {}
-        email = (member.get("email") or "").strip()
-        name = member.get("name") or email or _("Loyalty Member")
+        member_id = (member.get("id") or "").strip()
 
         # Find or create the customer. Email is our match key; adjust if your
         # loyalty backend returns a stronger external identifier.
         partner = self.env["res.partner"]
-        if email:
-            partner = partner.search([("email", "=", email)], limit=1)
-        if not partner:
-            partner = partner.create(
-                {
-                    "name": name,
-                    "email": email or False,
-                    "phone": member.get("phone") or False,
-                }
-            )
+        if member_id:
+            partner = partner.search([("ref", "=", member_id)], limit=1)
 
         return {
             "session_code": data.get("session_id", code),

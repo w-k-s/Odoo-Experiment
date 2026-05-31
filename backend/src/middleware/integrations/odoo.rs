@@ -89,11 +89,21 @@ impl Odoo {
     }
 
     /// Create a contact (`res.partner`) and return its Odoo id.
-    pub async fn create_contact(&self, name: &str, email: Option<&str>) -> AppResult<i32> {
+    ///
+    /// `member_ref` is the loyalty member id; we store it in the partner's
+    /// `ref` field so the Odoo record links back to the loyalty member.
+    pub async fn create_contact(
+        &self,
+        name: &str,
+        email: Option<&str>,
+        member_ref: &str,
+    ) -> AppResult<i32> {
         let uid = self.uid().await?;
 
         let mut fields = Map::new();
         fields.insert("name".into(), json!(name));
+        fields.insert("company_type".into(), json!("person"));
+        fields.insert("ref".into(), json!(member_ref));
         if let Some(email) = email {
             fields.insert("email".into(), json!(email));
         }

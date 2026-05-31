@@ -2,6 +2,7 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
 
+use crate::loyalty_engine::ids::new_id;
 use crate::loyalty_engine::models::Member;
 use crate::middleware::dto::CreateMember;
 use crate::middleware::error::AppResult;
@@ -21,7 +22,7 @@ pub async fn create_member(
 
     let member = state
         .members
-        .create(None, &body.name, body.email.as_deref(), None, &program_id)
+        .create(&new_id("mem"), None, &body.name, body.email.as_deref(), None, &program_id)
         .await?;
     Ok((StatusCode::CREATED, Json(member)))
 }

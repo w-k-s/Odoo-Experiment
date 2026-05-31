@@ -44,6 +44,7 @@ pub async fn get_session(
         session_id: owned.session_id,
         status: owned.status,
         member: SessionMember {
+            id: owned.member.id,
             name: owned.member.name,
             email: owned.member.email,
         },

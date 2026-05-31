@@ -25,6 +25,7 @@ pub struct CreateMember {
 /// Member subset embedded in a session lookup (what the POS consumes).
 #[derive(Debug, Serialize)]
 pub struct SessionMember {
+    pub id: String,
     pub name: String,
     pub email: Option<String>,
 }

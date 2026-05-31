@@ -2,7 +2,6 @@ use diesel::prelude::*;
 
 use crate::loyalty_engine::db::Pool;
 use crate::loyalty_engine::error::EngineResult;
-use crate::loyalty_engine::ids::new_id;
 use crate::loyalty_engine::models::{Member, NewMember};
 
 /// Loyalty members enrolled in a program.
@@ -37,6 +36,7 @@ impl MemberService {
     /// both token-provisioned members and the admin/direct-create path.
     pub async fn create(
         &self,
+        id: &str,
         sub: Option<&str>,
         name: &str,
         email: Option<&str>,
@@ -44,7 +44,7 @@ impl MemberService {
         program_id: &str,
     ) -> EngineResult<Member> {
         let new = NewMember {
-            id: new_id("mem"),
+            id: id.to_string(),
             program_id: program_id.to_string(),
             name: name.to_string(),
             email: email.map(str::to_string),
