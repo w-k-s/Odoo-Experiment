@@ -34,5 +34,6 @@ pub async fn build_authorizer(domain: &str, audience: &str) -> Authorizer<Claims
         .validation(validation)
         .build()
         .await
+        .inspect_err(|e| tracing::error!(error = %e, "failed to build Auth0 JWT authorizer"))
         .expect("failed to build Auth0 JWT authorizer")
 }

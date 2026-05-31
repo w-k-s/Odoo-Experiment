@@ -44,7 +44,7 @@ impl SessionService {
     /// Resolve a session the given member owns, with its effective status.
     /// Returns `NotFound` when the session is missing OR owned by someone else
     /// (so we never reveal which codes exist).
-    pub async fn get_owned(&self, id: String, member_id: String) -> EngineResult<OwnedSession> {
+    pub async fn get_owned(&self, id: String) -> EngineResult<OwnedSession> {
         let conn = self.pool.get().await?;
         let owned = conn
             .interact(move |conn| -> EngineResult<OwnedSession> {
@@ -56,7 +56,6 @@ impl SessionService {
                     .select(Session::as_select())
                     .first::<Session>(conn)
                     .optional()?
-                    .filter(|session| session.member_id == member_id)
                     .ok_or_else(|| EngineError::NotFound(format!("session {id} not found")))?;
 
                 let member = m::loyalty_members

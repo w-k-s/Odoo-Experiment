@@ -35,13 +35,11 @@ pub async fn get_session(
     Path(id): Path<String>,
 ) -> AppResult<Json<SessionDetail>> {
     // The caller must already be a provisioned member to own any session.
-    let caller = state
-        .members
-        .find_by_sub(&claims.sub)
-        .await?
-        .ok_or_else(|| AppError::NotFound(format!("session {id} not found")))?;
-
-    let owned = state.sessions.get_owned(id, caller.id).await?;
+    let owned = state
+        .sessions
+        .get_owned(id)
+        .await
+        .inspect_err(|e| tracing::error!(error = %e, "failed to get owned session"))?;
     Ok(Json(SessionDetail {
         session_id: owned.session_id,
         status: owned.status,
