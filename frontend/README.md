@@ -26,30 +26,8 @@ pnpm dev               # http://localhost:5173
 
 The backend must be running (see `../backend`) at `VITE_API_BASE`.
 
-## Auth0 setup (one-time)
 
-In the Auth0 dashboard:
 
-1. **Enable the Google social connection** on the SPA application.
-2. **Create an API** with identifier (audience) `https://loyalty-api` — this
-   matches `VITE_AUTH0_AUDIENCE` and the backend's `AUTH0_AUDIENCE`, so access
-   tokens are verifiable JWTs.
-3. In the SPA app settings, add to **Allowed Callback URLs**, **Allowed Logout
-   URLs**, and **Allowed Web Origins**:
-   - `http://localhost:5173` (dev)
-   - `http://localhost:8080` (docker compose)
-
-## Environment
-
-| Var | Purpose |
-| --- | --- |
-| `VITE_AUTH0_DOMAIN` | Auth0 tenant domain |
-| `VITE_AUTH0_CLIENT_ID` | SPA application client id |
-| `VITE_AUTH0_AUDIENCE` | API audience (`https://loyalty-api`) |
-| `VITE_API_BASE` | Loyalty backend base URL |
-
-`VITE_*` values are inlined at build time, so the Docker image takes them as
-build args (wired in `docker-compose.yaml`).
 
 ## Build / Docker
 

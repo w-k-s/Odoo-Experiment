@@ -23,13 +23,12 @@ export interface SessionDetail {
   member: { name: string; email: string | null };
 }
 
-/** The raw ID-token JWT (used as the bearer for our API — POC). */
+/** The Auth0 access-token JWT used as the bearer for our API. */
 async function idToken(): Promise<string> {
-  // Refresh the session so the ID token isn't stale, then read its raw JWT.
-  await auth0.checkSession();
-  const raw = auth0.idTokenClaims.value?.__raw;
-  if (!raw) throw new Error("not authenticated");
-  return raw;
+  // Returns a cached token, silently refreshing via refresh token when stale.
+  const token = await auth0.getAccessTokenSilently();
+  if (!token) throw new Error("not authenticated");
+  return token;
 }
 
 /** Fetch with the caller's Auth0 ID token attached. Does not throw on status. */
