@@ -13,8 +13,8 @@ CREATE TABLE loyalty_members (
     email               TEXT UNIQUE,
     -- Auth0 subject claim; the stable identity we key a member by.
     auth0_sub           TEXT UNIQUE,
-    -- Id of the linked contact in the external system (Odoo res.partner).
-    external_contact_id INTEGER,
+    -- Opaque id of the linked contact in the CRM (Odoo res.partner id, as text).
+    external_contact_id TEXT,
     points              INTEGER NOT NULL DEFAULT 0,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );

@@ -8,6 +8,14 @@ pub struct OdooConfig {
     pub api_key: String,
 }
 
+/// Machine-to-machine credentials for the Auth0 Management API, used by the
+/// identity integration to resolve a caller's profile by `sub`.
+#[derive(Debug, Clone)]
+pub struct Auth0MgmtConfig {
+    pub client_id: String,
+    pub client_secret: String,
+}
+
 /// Runtime configuration, read from environment variables.
 pub struct Config {
     pub database_url: String,
@@ -19,6 +27,8 @@ pub struct Config {
     pub auth0_domain: String,
     /// Auth0 audience the tokens are issued for (the SPA client id for ID-token auth).
     pub auth0_audience: String,
+    /// Auth0 Management API M2M credentials (identity integration).
+    pub auth0_mgmt: Auth0MgmtConfig,
     /// Odoo JSON-RPC connection settings.
     pub odoo: OdooConfig,
 }
@@ -39,6 +49,13 @@ impl Config {
         let auth0_audience =
             std::env::var("AUTH0_AUDIENCE").expect("AUTH0_AUDIENCE must be set");
 
+        let auth0_mgmt = Auth0MgmtConfig {
+            client_id: std::env::var("AUTH0_MGMT_CLIENT_ID")
+                .expect("AUTH0_MGMT_CLIENT_ID must be set"),
+            client_secret: std::env::var("AUTH0_MGMT_CLIENT_SECRET")
+                .expect("AUTH0_MGMT_CLIENT_SECRET must be set"),
+        };
+
         let odoo = OdooConfig {
             url: std::env::var("ODOO_URL").unwrap_or_else(|_| "http://odoo:8069".to_string()),
             db: std::env::var("ODOO_DB").unwrap_or_else(|_| "odoo".to_string()),
@@ -53,6 +70,7 @@ impl Config {
             bootstrap_program_name,
             auth0_domain,
             auth0_audience,
+            auth0_mgmt,
             odoo,
         }
     }

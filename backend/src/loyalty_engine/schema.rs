@@ -15,7 +15,7 @@ diesel::table! {
         name -> Text,
         email -> Nullable<Text>,
         auth0_sub -> Nullable<Text>,
-        external_contact_id -> Nullable<Int4>,
+        external_contact_id -> Nullable<Text>,
         points -> Int4,
         created_at -> Timestamptz,
     }

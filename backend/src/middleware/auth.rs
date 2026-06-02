@@ -4,25 +4,23 @@
 //! from Auth0's JWKS endpoint and mount it as a tower layer on the protected
 //! routes (see `middleware::router`). Handlers then extract `JwtClaims<Claims>`.
 //!
-//! POC note: the PWA authenticates with the **ID token** (audience = the SPA
-//! client id), which carries the member's `name`/`email`/`sub` — so we read the
-//! profile straight from the verified claims, no `/userinfo` round-trip.
+//! The PWA authenticates with an **access token** for the API audience. Access
+//! tokens carry `sub` but not `name`/`email`, so handlers resolve the profile
+//! from the identity provider by `sub` (see `integrations::identity`).
 
 use jwt_authorizer::{Authorizer, JwtAuthorizer, Validation};
 use serde::Deserialize;
 
-/// The verified claims we care about. `sub` is the stable member key; the OIDC
-/// `name`/`email` claims are present because the app requests `profile email`.
+/// The verified claims we care about. `sub` is the stable member key.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Claims {
     pub sub: String,
-    pub name: Option<String>,
-    pub email: Option<String>,
 }
 
 /// Build the JWKS-backed authorizer for the given Auth0 tenant + audience.
 ///
-/// For ID-token auth `audience` is the SPA client id (the token's `aud`).
+/// `audience` is the API audience the access token is issued for (the token's
+/// `aud`), set via `AUTH0_AUDIENCE`.
 pub async fn build_authorizer(domain: &str, audience: &str) -> Authorizer<Claims> {
     let issuer = format!("https://{domain}/");
     let jwks_url = format!("https://{domain}/.well-known/jwks.json");

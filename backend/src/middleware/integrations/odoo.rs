@@ -16,6 +16,7 @@ use tokio::sync::Mutex;
 
 use crate::config::OdooConfig;
 use crate::middleware::error::{AppError, AppResult};
+use crate::middleware::integrations::crm::{ContactId, Crm, NewContact};
 
 /// Lazily-authenticated Odoo client, cheap to `clone` (shared uid cache).
 #[derive(Clone)]
@@ -87,24 +88,23 @@ impl Odoo {
         *slot = Some(uid);
         Ok(uid)
     }
+}
 
-    /// Create a contact (`res.partner`) and return its Odoo id.
+/// Odoo plays the CRM role: it owns contacts (`res.partner`).
+#[axum::async_trait]
+impl Crm for Odoo {
+    /// Create a contact (`res.partner`) and return its Odoo id (as text).
     ///
     /// `member_ref` is the loyalty member id; we store it in the partner's
     /// `ref` field so the Odoo record links back to the loyalty member.
-    pub async fn create_contact(
-        &self,
-        name: &str,
-        email: Option<&str>,
-        member_ref: &str,
-    ) -> AppResult<i32> {
+    async fn create_contact(&self, contact: NewContact<'_>) -> AppResult<ContactId> {
         let uid = self.uid().await?;
 
         let mut fields = Map::new();
-        fields.insert("name".into(), json!(name));
+        fields.insert("name".into(), json!(contact.name));
         fields.insert("company_type".into(), json!("person"));
-        fields.insert("ref".into(), json!(member_ref));
-        if let Some(email) = email {
+        fields.insert("ref".into(), json!(contact.member_ref));
+        if let Some(email) = contact.email {
             fields.insert("email".into(), json!(email));
         }
 
@@ -123,8 +123,11 @@ impl Odoo {
             )
             .await?;
 
-        result.as_i64().map(|id| id as i32).ok_or_else(|| {
-            AppError::Internal(format!("odoo create_contact unexpected response: {result}"))
-        })
+        result
+            .as_i64()
+            .map(|id| ContactId(id.to_string()))
+            .ok_or_else(|| {
+                AppError::Internal(format!("odoo create_contact unexpected response: {result}"))
+            })
     }
 }

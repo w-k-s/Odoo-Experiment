@@ -40,7 +40,7 @@ impl MemberService {
         sub: Option<&str>,
         name: &str,
         email: Option<&str>,
-        external_contact_id: Option<i32>,
+        external_contact_id: Option<&str>,
         program_id: &str,
     ) -> EngineResult<Member> {
         let new = NewMember {
@@ -49,7 +49,7 @@ impl MemberService {
             name: name.to_string(),
             email: email.map(str::to_string),
             auth0_sub: sub.map(str::to_string),
-            external_contact_id,
+            external_contact_id: external_contact_id.map(str::to_string),
         };
 
         let conn = self.pool.get().await?;

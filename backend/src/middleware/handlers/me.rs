@@ -11,13 +11,13 @@ use crate::middleware::state::AppState;
 /// `GET /loyalty/me`
 ///
 /// Returns the authenticated member's profile + point balance, provisioning the
-/// member (Odoo contact + loyalty row) on first call. Profile comes from the
-/// verified ID-token claims.
+/// member (CRM contact + loyalty row) on first call. On first sight the profile
+/// is resolved from the identity provider by `sub`; thereafter it comes from the
+/// datastore.
 pub async fn me(
     State(state): State<AppState>,
     JwtClaims(claims): JwtClaims<Claims>,
 ) -> AppResult<Json<MemberProfile>> {
-    let name = claims.name.clone().unwrap_or_else(|| "Member".to_string());
-    let member = ensure_member(&state, &claims.sub, &name, claims.email.as_deref()).await?;
+    let member = ensure_member(&state, &claims.sub).await?;
     Ok(Json(member.into()))
 }

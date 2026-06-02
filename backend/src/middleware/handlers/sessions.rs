@@ -6,7 +6,7 @@ use jwt_authorizer::JwtClaims;
 use crate::loyalty_engine::models::Session;
 use crate::middleware::auth::Claims;
 use crate::middleware::dto::{SessionDetail, SessionMember};
-use crate::middleware::error::{AppError, AppResult};
+use crate::middleware::error::AppResult;
 use crate::middleware::handlers::provisioning::ensure_member;
 use crate::middleware::state::AppState;
 
@@ -19,8 +19,7 @@ pub async fn create_session(
     State(state): State<AppState>,
     JwtClaims(claims): JwtClaims<Claims>,
 ) -> AppResult<(StatusCode, Json<Session>)> {
-    let name = claims.name.clone().unwrap_or_else(|| "Member".to_string());
-    let member = ensure_member(&state, &claims.sub, &name, claims.email.as_deref()).await?;
+    let member = ensure_member(&state, &claims.sub).await?;
     let session = state.sessions.create(member.id).await?;
     Ok((StatusCode::CREATED, Json(session)))
 }
@@ -31,7 +30,7 @@ pub async fn create_session(
 /// the caller owns the session — on mismatch we 404 rather than reveal it exists.
 pub async fn get_session(
     State(state): State<AppState>,
-    JwtClaims(claims): JwtClaims<Claims>,
+    JwtClaims(_claims): JwtClaims<Claims>,
     Path(id): Path<String>,
 ) -> AppResult<Json<SessionDetail>> {
     // The caller must already be a provisioned member to own any session.

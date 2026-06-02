@@ -9,7 +9,11 @@ use loyalty_engine::db;
 use loyalty_engine::services::members::MemberService;
 use loyalty_engine::services::programs::ProgramService;
 use loyalty_engine::services::sessions::SessionService;
+use std::sync::Arc;
+
+use middleware::integrations::auth0::Auth0;
 use middleware::integrations::odoo::Odoo;
+use middleware::integrations::{Crm, IdentityProvider};
 use middleware::state::AppState;
 
 #[tokio::main]
@@ -47,7 +51,9 @@ async fn main() {
     );
 
     // ---- middleware: integrations + auth + router ----
-    let odoo = Odoo::new(config.odoo.clone());
+    let crm: Arc<dyn Crm> = Arc::new(Odoo::new(config.odoo.clone()));
+    let identity: Arc<dyn IdentityProvider> =
+        Arc::new(Auth0::new(&config.auth0_domain, config.auth0_mgmt.clone()));
     let authorizer =
         middleware::auth::build_authorizer(&config.auth0_domain, &config.auth0_audience).await;
 
@@ -55,7 +61,8 @@ async fn main() {
         programs,
         members,
         sessions,
-        odoo,
+        crm,
+        identity,
         default_program_id,
     };
 
