@@ -25,6 +25,17 @@ class PosOrder(models.Model):
         "captured downstream via CDC (Debezium).",
     )
 
+    # Stored copy of the linked partner's `ref` (the loyalty member id). Stored
+    # so it lands as a real column on pos_order and is captured by Debezium CDC
+    # directly — Debezium can't join pos_order to res.partner.
+    loyalty_member_ref = fields.Char(
+        string="Loyalty Member Ref",
+        related="partner_id.ref",
+        store=True,
+        help="The linked customer's reference (loyalty member id), denormalized "
+        "onto the order so it travels in the CDC event.",
+    )
+
     @api.model
     def lookup_loyalty_session(self, code):
         """Resolve a loyalty session code to a customer.
