@@ -14,7 +14,7 @@ pub struct ContactId(pub String);
 /// Odoo impl puts it in the partner's `ref`).
 pub struct NewContact<'a> {
     pub name: &'a str,
-    pub email: Option<&'a str>,
+    pub email: &'a str,
     pub member_ref: &'a str,
 }
 

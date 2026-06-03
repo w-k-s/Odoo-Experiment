@@ -15,15 +15,15 @@ impl MemberService {
         Self { pool }
     }
 
-    /// Look up a member by their Auth0 `sub`, if one exists.
-    pub async fn find_by_sub(&self, sub: &str) -> EngineResult<Option<Member>> {
+    /// Look up a member by their Auth0 `email`, if one exists.
+    pub async fn find_by_email(&self, email: &str) -> EngineResult<Option<Member>> {
         let conn = self.pool.get().await?;
-        let sub = sub.to_string();
+        let email = email.to_string();
         let member = conn
             .interact(move |conn| {
                 use crate::loyalty_engine::schema::loyalty_members::dsl as m;
                 m::loyalty_members
-                    .filter(m::auth0_sub.eq(&sub))
+                    .filter(m::email.eq(&email))
                     .select(Member::as_select())
                     .first::<Member>(conn)
                     .optional()
@@ -37,9 +37,8 @@ impl MemberService {
     pub async fn create(
         &self,
         id: &str,
-        sub: Option<&str>,
         name: &str,
-        email: Option<&str>,
+        email: &str,
         external_contact_id: Option<&str>,
         program_id: &str,
     ) -> EngineResult<Member> {
@@ -47,8 +46,7 @@ impl MemberService {
             id: id.to_string(),
             program_id: program_id.to_string(),
             name: name.to_string(),
-            email: email.map(str::to_string),
-            auth0_sub: sub.map(str::to_string),
+            email: email.to_string(),
             external_contact_id: external_contact_id.map(str::to_string),
         };
 

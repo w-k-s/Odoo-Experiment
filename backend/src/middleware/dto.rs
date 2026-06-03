@@ -17,7 +17,7 @@ pub struct CreateMember {
     /// Optional: defaults to the bootstrapped program when omitted.
     pub program_id: Option<String>,
     pub name: String,
-    pub email: Option<String>,
+    pub email: String,
 }
 
 // ---------- Responses ----------

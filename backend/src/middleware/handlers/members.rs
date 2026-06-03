@@ -22,7 +22,7 @@ pub async fn create_member(
 
     let member = state
         .members
-        .create(&new_id("mem"), None, &body.name, body.email.as_deref(), None, &program_id)
+        .create(&new_id("mem"), &body.name, &body.email, None, &program_id)
         .await?;
     Ok((StatusCode::CREATED, Json(member)))
 }

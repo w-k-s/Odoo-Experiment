@@ -19,3 +19,6 @@ odoo-assets:
 ## Just restart the live Odoo server.
 odoo-restart:
 	docker compose restart odoo
+
+backend-force-recreate:
+	docker compose up -d --force-recreate loyalty-backend

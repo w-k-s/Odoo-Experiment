@@ -102,11 +102,9 @@ impl Crm for Odoo {
 
         let mut fields = Map::new();
         fields.insert("name".into(), json!(contact.name));
+        fields.insert("email".into(), json!(contact.name));
         fields.insert("company_type".into(), json!("person"));
         fields.insert("ref".into(), json!(contact.member_ref));
-        if let Some(email) = contact.email {
-            fields.insert("email".into(), json!(email));
-        }
 
         let result = self
             .call(

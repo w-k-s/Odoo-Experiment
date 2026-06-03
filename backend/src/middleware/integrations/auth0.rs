@@ -85,9 +85,20 @@ impl Auth0 {
             .map_err(|e| AppError::Internal(format!("auth0 token request failed: {e}")))?;
 
         if !resp.status().is_success() {
+            let status = resp.status();
+            let endpoint = &self.token_endpoint;
+            // Emit a replayable curl (POST + client-credentials body) for the shell.
+            tracing::error!(
+                "auth0 token endpoint returned {status}; replay: \
+                 curl -X POST '{endpoint}' -H 'Content-Type: application/json' \
+                 -d '{{\"client_id\":\"{client_id}\",\"client_secret\":\"{client_secret}\",\
+                 \"audience\":\"{audience}\",\"grant_type\":\"client_credentials\"}}'",
+                client_id = self.mgmt.client_id,
+                client_secret = self.mgmt.client_secret,
+                audience = self.audience,
+            );
             return Err(AppError::Internal(format!(
-                "auth0 token endpoint returned {}",
-                resp.status()
+                "auth0 token endpoint returned {status}"
             )));
         }
 
@@ -108,21 +119,28 @@ impl Auth0 {
 
 #[axum::async_trait]
 impl IdentityProvider for Auth0 {
+    /// Management client requires permissions: read:users,read:current_user,read:user_idp_tokens
     async fn fetch_profile(&self, subject: &str) -> AppResult<Profile> {
         let token = self.mgmt_token().await?;
+        let url = format!("{}/{}", self.users_endpoint, subject);
 
         let resp = self
             .http
-            .get(format!("{}/{}", self.users_endpoint, subject))
-            .bearer_auth(token)
+            .get(&url)
+            .bearer_auth(&token)
             .send()
             .await
             .map_err(|e| AppError::Internal(format!("auth0 users request failed: {e}")))?;
 
         if !resp.status().is_success() {
+            let status = resp.status();
+            // Emit a replayable curl so the failing call can be reproduced from a shell.
+            tracing::error!(
+                "auth0 users endpoint returned {status}; replay: \
+                 curl -H 'Authorization: Bearer {token}' '{url}'"
+            );
             return Err(AppError::Internal(format!(
-                "auth0 users endpoint returned {}",
-                resp.status()
+                "auth0 users endpoint returned {status}"
             )));
         }
 

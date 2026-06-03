@@ -32,7 +32,6 @@ pub struct Member {
     pub program_id: String,
     pub name: String,
     pub email: Option<String>,
-    pub auth0_sub: Option<String>,
     pub external_contact_id: Option<String>,
     pub points: i32,
     pub created_at: DateTime<Utc>,
@@ -44,8 +43,7 @@ pub struct NewMember {
     pub id: String,
     pub program_id: String,
     pub name: String,
-    pub email: Option<String>,
-    pub auth0_sub: Option<String>,
+    pub email: String,
     pub external_contact_id: Option<String>,
 }
 

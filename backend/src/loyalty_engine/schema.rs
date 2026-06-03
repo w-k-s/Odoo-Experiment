@@ -14,7 +14,6 @@ diesel::table! {
         program_id -> Text,
         name -> Text,
         email -> Nullable<Text>,
-        auth0_sub -> Nullable<Text>,
         external_contact_id -> Nullable<Text>,
         points -> Int4,
         created_at -> Timestamptz,
@@ -34,8 +33,4 @@ diesel::table! {
 diesel::joinable!(loyalty_members -> loyalty_programs (program_id));
 diesel::joinable!(loyalty_sessions -> loyalty_members (member_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    loyalty_programs,
-    loyalty_members,
-    loyalty_sessions,
-);
+diesel::allow_tables_to_appear_in_same_query!(loyalty_programs, loyalty_members, loyalty_sessions,);

@@ -3,7 +3,7 @@
 
 use crate::loyalty_engine::ids::new_id;
 use crate::loyalty_engine::models::Member;
-use crate::middleware::error::AppResult;
+use crate::middleware::error::{AppError, AppResult};
 use crate::middleware::integrations::NewContact;
 use crate::middleware::state::AppState;
 
@@ -12,13 +12,15 @@ use crate::middleware::state::AppState;
 /// (access tokens don't carry `name`/`email`), create the CRM contact, then the
 /// member row.
 pub async fn ensure_member(state: &AppState, sub: &str) -> AppResult<Member> {
-    if let Some(existing) = state.members.find_by_sub(sub).await? {
-        return Ok(existing);
-    }
-
     let profile = state.identity.fetch_profile(sub).await?;
     let name = profile.name.unwrap_or_else(|| "Member".to_string());
-    let email = profile.email.as_deref();
+    let email = profile
+        .email
+        .ok_or_else(|| AppError::Internal(format!("identity profile for {sub} has no email")))?;
+
+    if let Some(existing) = state.members.find_by_email(&email).await? {
+        return Ok(existing);
+    }
 
     // Generate the member id up front so we can stamp it onto the CRM contact's
     // `member_ref`, linking the contact back to the loyalty member.
@@ -27,7 +29,7 @@ pub async fn ensure_member(state: &AppState, sub: &str) -> AppResult<Member> {
         .crm
         .create_contact(NewContact {
             name: &name,
-            email,
+            email: &email,
             member_ref: &member_id,
         })
         .await?;
@@ -35,9 +37,8 @@ pub async fn ensure_member(state: &AppState, sub: &str) -> AppResult<Member> {
         .members
         .create(
             &member_id,
-            Some(sub),
             &name,
-            email,
+            &email,
             Some(&contact.0),
             &state.default_program_id,
         )
