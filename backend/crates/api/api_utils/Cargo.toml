@@ -1,0 +1,16 @@
+[package]
+name = "api_utils"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+crm = {path = "../../integrations/crm"}
+auth = {path = "../../integrations/auth"}
+loyalty = {path = "../../integrations/loyalty"}
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Auth: Auth0 JWT verification (JWKS layer + claims extractor for axum)
+jwt-authorizer = "0.15"
+tracing = "0.1"

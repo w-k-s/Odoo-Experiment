@@ -17,3 +17,4 @@ A distributed system integrating Odoo POS with a loyalty platform using Kafka, D
 
 
 
+https://developer.confluent.io/courses/event-sourcing/hands-on-confluent-cloud/

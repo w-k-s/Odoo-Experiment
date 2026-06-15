@@ -1,0 +1,11 @@
+[package]
+name = "routes"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+api = { path = "../api" }
+api_utils = { path = "../api_utils" }
+axum = "0.7"
+jwt-authorizer = "0.15"
+tower-http = { version = "0.6", features = ["trace", "cors"] }

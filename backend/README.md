@@ -71,3 +71,18 @@ Don't use the master admin password. Set up a scoped integration identity:
    key`. Keys can be revoked/rotated without touching the login.
 5. Always use HTTPS for real deployments (in-cluster compose to `http://odoo:8069`
    is fine for local dev).
+
+---
+
+1. To understate the complexity: where do we put loyalty_engine?
+2. What belong in app state (pool and ...)
+3. Where do we put the response schemas
+~4. How do we read configuration~
+
+integrations
+- traits for crm, auth
+- impl for crm, auth
+
+crates/integrations/odoo
+crates/integrations/auth0
+crates/integrations/loyalty_engine

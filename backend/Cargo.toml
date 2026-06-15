@@ -1,38 +1,6 @@
-[package]
+[workspace]
+resolver="3"
 name = "loyalty-backend"
 version = "0.1.0"
 edition = "2021"
-
-[dependencies]
-# Web framework
-axum = "0.7"
-tokio = { version = "1", features = ["full"] }
-tower-http = { version = "0.6", features = ["trace", "cors"] }
-
-# Database: Diesel (sync) + deadpool for async connection pooling
-diesel = { version = "2.2", features = ["postgres", "chrono"] }
-diesel_migrations = "2.2"
-deadpool-diesel = { version = "0.6", features = ["postgres"] }
-
-# Auth: Auth0 JWT verification (JWKS layer + claims extractor for axum)
-jwt-authorizer = "0.15"
-
-# HTTP client (Odoo JSON-RPC calls)
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
-
-# Serialization
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-
-# ID generation
-nanoid = "0.4"
-
-# Types
-chrono = { version = "0.4", features = ["serde"] }
-
-# Utilities
-dotenvy = "0.15"
-
-# Observability
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+members = ["crates/api/api","crates/api/api_utils","crates/api/routes", "crates/integrations/auth", "crates/integrations/crm", "crates/integrations/loyalty", "crates/loyalty_engine", "crates/server", "crates/utils"]

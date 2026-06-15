@@ -18,7 +18,10 @@ odoo-assets:
 
 ## Just restart the live Odoo server.
 odoo-restart:
-	docker compose restart odoo
+	docker compose restart odoo 
 
 backend-force-recreate:
 	docker compose up -d --force-recreate loyalty-backend
+
+backend-generate-schema: backend-force-recreate
+	cd backend; diesel migration run --database-url=postgres://loyalty:loyalty_password@localhost:5433/loyalty; cd ..
