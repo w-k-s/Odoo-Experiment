@@ -6,3 +6,4 @@ pub mod models;
 pub mod programs;
 pub mod schema;
 pub mod sessions;
+pub mod transactions;

@@ -1,8 +1,9 @@
+use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::Serialize;
 
-use crate::schema::{loyalty_members, loyalty_programs, loyalty_sessions};
+use crate::schema::{loyalty_members, loyalty_programs, loyalty_sessions, points_transactions};
 
 // ---------- Programs ----------
 
@@ -12,6 +13,7 @@ use crate::schema::{loyalty_members, loyalty_programs, loyalty_sessions};
 pub struct Program {
     pub id: String,
     pub name: String,
+    pub points_per_currency_minor_unit: i32,
     pub created_at: DateTime<Utc>,
 }
 
@@ -20,6 +22,33 @@ pub struct Program {
 pub struct NewProgram {
     pub id: String,
     pub name: String,
+}
+
+#[derive(Debug, Clone, Queryable, Selectable, Serialize)]
+#[diesel(table_name= points_transactions)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct PointsTransaction {
+    pub id: String,    
+    pub member_id: String,
+    pub program_id: String,
+    pub source_system: String,
+    pub source_order: String,
+    pub delta: i32,
+    pub amount_total: BigDecimal,
+    pub created_at: DateTime<Utc>,
+}
+
+
+#[derive(Debug, Insertable)]
+#[diesel(table_name = points_transactions)]
+pub struct NewTransaction {
+    pub id: String,
+    pub member_id: String,
+    pub program_id: String,
+    pub source_system: String,
+    pub source_order: String,
+    pub delta: i32,
+    pub amount_total: BigDecimal,
 }
 
 // ---------- Members ----------

@@ -35,6 +35,8 @@ diesel::table! {
     points_transactions (id) {
         id -> Text,
         member_id -> Text,
+        program_id -> Text,
+        source_system -> Text,
         source_order -> Text,
         delta -> Int4,
         amount_total -> Numeric,

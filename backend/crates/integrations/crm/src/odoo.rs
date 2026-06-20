@@ -21,7 +21,6 @@ pub struct Odoo {
 
 #[derive(Clone)]
 struct OdooSession {
-    uid: i64,
     session_id: String,
 }
 
@@ -103,14 +102,18 @@ impl Odoo {
             return Err(AppError::Internal(format!("odoo auth error: {err}")));
         }
 
-        let uid = body
+        // Verify auth succeeded by checking uid is present in the response.
+        let uid_present = body
             .result
             .as_ref()
             .and_then(|r| r.get("uid"))
             .and_then(|v| v.as_i64())
-            .ok_or_else(|| AppError::Internal("odoo auth: missing uid in response".into()))?;
+            .is_some();
+        if !uid_present {
+            return Err(AppError::Internal("odoo auth: missing uid in response".into()));
+        }
 
-        let s = OdooSession { uid, session_id };
+        let s = OdooSession { session_id };
         *slot = Some(s.clone());
         Ok(s)
     }
