@@ -7,7 +7,6 @@ edition = "2024"
 axum = "0.7"
 api_utils = { path = "../api_utils" }
 utils = { path = "../../utils" }
-loyalty_engine = { path = "../../loyalty_engine" }
 loyalty = { path = "../../integrations/loyalty" }
 crm = { path = "../../integrations/crm" }
 

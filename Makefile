@@ -20,11 +20,19 @@ odoo-assets:
 odoo-restart:
 	docker compose restart odoo 
 
-backend-build:
+backend: backend/crates/**
 	cd backend; cargo build; cd ..;
 
-backend-force-recreate:
+backend-lint: backend/crates/**
+	cd backend; cargo clippy; cd ..;
+
+## Restart the backend container without rebuilding the image (picks up env/config changes only).
+backend-restart:
 	docker compose up -d --force-recreate loyalty-backend
 
-backend-generate-schema: backend-force-recreate
+## Rebuild the Docker image from source and restart the container (picks up code changes).
+backend-rebuild:
+	docker compose up -d --build loyalty-backend
+
+backend-generate-schema: 
 	diesel migration run --database-url=postgres://loyalty:loyalty_password@localhost:5433/loyalty

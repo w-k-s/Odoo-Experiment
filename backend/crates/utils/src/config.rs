@@ -16,6 +16,13 @@ pub struct Auth0MgmtConfig {
     pub client_secret: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct ConsumerConfig {
+    pub group_id: String,
+    pub bootstrap_servers: String,
+    pub topics: Vec<String>,
+}
+
 /// Runtime configuration, read from environment variables.
 pub struct Config {
     pub database_url: String,
@@ -31,6 +38,7 @@ pub struct Config {
     pub auth0_mgmt: Auth0MgmtConfig,
     /// Odoo JSON-RPC connection settings.
     pub odoo: OdooConfig,
+    pub consumer: ConsumerConfig,
 }
 
 impl Config {
@@ -63,6 +71,14 @@ impl Config {
             api_key: std::env::var("ODOO_API_KEY").unwrap_or_default(),
         };
 
+        let consumer = ConsumerConfig { 
+            group_id: std::env::var("KAFKA_GROUP_ID").unwrap_or_else(|_| "1".to_string()), 
+            bootstrap_servers: std::env::var("KAFKA_BOOTSTRAP_SERVERS").expect("KAFKA_BOOTSTRAP_SERVERS must be set"), 
+            topics: std::env::var("KAFKA_TOPICS").expect("KAFKA_TOPICS must be set")
+                .split(',')
+                .map(String::from)
+                .collect() };
+
         Self {
             database_url,
             bind_addr,
@@ -72,6 +88,7 @@ impl Config {
             auth0_audience,
             auth0_mgmt,
             odoo,
+            consumer
         }
     }
 }

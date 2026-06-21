@@ -2,10 +2,19 @@
 //! abstracted over the concrete implementation (Diesel/Postgres today — see
 //! `engine.rs`).
 
+pub mod db;
 pub mod engine;
+pub mod error;
+pub mod ids;
+pub mod members;
+pub mod models;
+pub mod programs;
+pub mod schema;
+pub mod sessions;
+pub mod transactions;
 
-use loyalty_engine::error::EngineResult;
-use loyalty_engine::models::{Member, OwnedSession, Program, Session};
+use error::EngineResult;
+use models::{Member, OwnedSession, Program, Session};
 
 /// Input for member creation. `external_contact_id` is the CRM-side id minted
 /// before calling this, so the member row links back to the CRM contact.

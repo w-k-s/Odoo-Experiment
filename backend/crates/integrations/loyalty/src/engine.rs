@@ -1,12 +1,12 @@
 //! Concrete `LoyaltyEngine` implementation backed by the Diesel/Postgres
 //! loyalty engine services.
 
-use loyalty_engine::db::Pool;
-use loyalty_engine::error::EngineResult;
-use loyalty_engine::members::MemberService;
-use loyalty_engine::models::{Member, OwnedSession, Program, Session};
-use loyalty_engine::programs::ProgramService;
-use loyalty_engine::sessions::SessionService;
+use crate::db::Pool;
+use crate::error::EngineResult;
+use crate::members::MemberService;
+use crate::models::{Member, OwnedSession, Program, Session};
+use crate::programs::ProgramService;
+use crate::sessions::SessionService;
 
 use crate::{LoyaltyEngine, NewMember};
 
@@ -23,7 +23,7 @@ impl DbLoyaltyEngine {
         Self {
             members: MemberService::new(pool.clone()),
             programs: ProgramService::new(pool.clone()),
-            sessions: SessionService::new(pool),
+            sessions: SessionService::new(pool.clone()),
         }
     }
 }

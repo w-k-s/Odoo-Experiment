@@ -5,7 +5,7 @@ use crate::error::{EngineError, EngineResult};
 
 pub use deadpool_diesel::postgres::Pool;
 
-pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../../../migrations");
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../../../../migrations");
 
 pub fn build_pool(database_url: &str, max_size: usize) -> Pool {
     let manager = Manager::new(database_url, Runtime::Tokio1);

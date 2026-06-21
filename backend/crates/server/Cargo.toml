@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-loyalty_engine = { path = "../loyalty_engine" }
 loyalty = { path = "../integrations/loyalty" }
 crm = { path = "../integrations/crm" }
 auth = { path = "../integrations/auth" }
 api_utils = { path = "../api/api_utils" }
 utils = { path = "../utils" }
 routes = { path = "../api/routes" }
+consumer = {path = "../consumer"}
 
 # Web framework
 axum = "0.7"

@@ -1,0 +1,10 @@
+[package]
+name = "consumer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rdkafka = { version = "0.36" }
+tracing = "0.1"
+loyalty = {path = "../integrations/loyalty"}
+utils = {path = "../utils"}

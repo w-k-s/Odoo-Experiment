@@ -3,4 +3,4 @@ resolver="3"
 name = "loyalty-backend"
 version = "0.1.0"
 edition = "2021"
-members = ["crates/api/api","crates/api/api_utils","crates/api/routes", "crates/integrations/auth", "crates/integrations/crm", "crates/integrations/loyalty", "crates/loyalty_engine", "crates/server", "crates/utils"]
+members = ["crates/api/api","crates/api/api_utils","crates/api/routes", "crates/consumer", "crates/integrations/auth", "crates/integrations/crm", "crates/integrations/loyalty", "crates/server", "crates/utils"]

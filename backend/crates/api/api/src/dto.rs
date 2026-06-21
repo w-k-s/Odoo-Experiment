@@ -3,7 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use loyalty_engine::models::Member;
+use loyalty::models::Member;
 
 // ---------- Requests ----------
 

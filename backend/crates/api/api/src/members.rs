@@ -3,9 +3,9 @@ use axum::http::StatusCode;
 use axum::Json;
 
 use api_utils::state::AppState;
+use loyalty::ids::new_id;
+use loyalty::models::Member;
 use loyalty::NewMember;
-use loyalty_engine::ids::new_id;
-use loyalty_engine::models::Member;
 use utils::error::AppResult;
 
 use crate::dto::CreateMember;

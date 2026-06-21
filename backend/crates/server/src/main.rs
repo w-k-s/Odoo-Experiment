@@ -9,11 +9,13 @@ use crm::odoo::Odoo;
 use crm::Crm;
 use loyalty::engine::DbLoyaltyEngine;
 use loyalty::LoyaltyEngine;
-use loyalty_engine::db;
+use loyalty::db;
 use utils::config::Config;
+use consumer::run;
 
 #[tokio::main]
 async fn main() {
+    tracing::error!("spawn");
     let _ = dotenvy::dotenv();
 
     tracing_subscriber::fmt()
@@ -48,9 +50,10 @@ async fn main() {
     let identity: Arc<dyn IdentityProvider> =
         Arc::new(Auth0::new(&config.auth0_domain, config.auth0_mgmt.clone()));
     let authorizer = build_authorizer(&config.auth0_domain, &config.auth0_audience).await;
+    let loyalty = Arc::new(loyalty);
 
     let state = AppState {
-        loyalty: Arc::new(loyalty),
+        loyalty: loyalty.clone(),
         crm,
         identity,
         default_program_id,
@@ -68,5 +71,11 @@ async fn main() {
         .unwrap_or_else(|e| panic!("failed to bind {addr}: {e}"));
     tracing::info!("loyalty backend listening on {addr}");
 
+    tokio::spawn(async move {
+         tracing::error!("spawn");
+        if let Err(e) = run(loyalty.clone(), config.consumer.clone()).await {
+            tracing::error!("consumer exited with error: {e}");
+        }
+    });
     axum::serve(listener, app).await.expect("server error");
 }

@@ -56,8 +56,8 @@ services:
       - "8069:8069"
     volumes:
       # - ./entrypoint.sh:/entrypoint.sh   # if you want to install additional Python packages, uncomment this line!
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
+      #- /etc/localtime:/etc/localtime:ro
+      #- /etc/timezone:/etc/timezone:ro
       - ./odoo/addons:/mnt/addons
       - ./odoo/etc:/etc/odoo
 
@@ -80,7 +80,9 @@ services:
 
   loyalty-backend:
     container_name: loyalty-backend
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     restart: unless-stopped
     depends_on:
       loyalty-postgres:

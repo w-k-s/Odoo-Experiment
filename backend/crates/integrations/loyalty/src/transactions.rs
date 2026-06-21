@@ -30,8 +30,8 @@ impl TransactionService {
             program_id: program_id.to_string(),
             source_system: "odoo".to_string(),
             source_order: source_order.to_string(),
-            delta: delta,
-            amount_total: amount_total,
+            delta,
+            amount_total,
         };
 
         let conn = self.pool.get().await?;

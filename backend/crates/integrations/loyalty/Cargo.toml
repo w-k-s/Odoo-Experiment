@@ -5,4 +5,10 @@ edition = "2024"
 
 [dependencies]
 axum = "0.7"
-loyalty_engine = { path = "../../loyalty_engine" }
+diesel = { version = "2.2", features = ["postgres", "chrono", "numeric"] }
+diesel_migrations = "2.2"
+deadpool-diesel = { version = "0.6", features = ["postgres"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+nanoid = "0.4"
+bigdecimal = {version = "0.4",features = ["serde"]}

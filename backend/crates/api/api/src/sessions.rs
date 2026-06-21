@@ -5,7 +5,7 @@ use jwt_authorizer::JwtClaims;
 
 use api_utils::auth::Claims;
 use api_utils::state::AppState;
-use loyalty_engine::models::Session;
+use loyalty::models::Session;
 use utils::error::AppResult;
 
 use crate::dto::{SessionDetail, SessionMember};

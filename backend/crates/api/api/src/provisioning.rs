@@ -4,8 +4,8 @@
 use api_utils::state::AppState;
 use crm::NewContact;
 use loyalty::NewMember;
-use loyalty_engine::ids::new_id;
-use loyalty_engine::models::Member;
+use loyalty::ids::new_id;
+use loyalty::models::Member;
 use utils::error::{AppError, AppResult};
 
 pub async fn ensure_member(state: &AppState, sub: &str) -> AppResult<Member> {

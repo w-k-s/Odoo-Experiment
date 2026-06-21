@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use axum::Json;
 
 use api_utils::state::AppState;
-use loyalty_engine::models::Program;
+use loyalty::models::Program;
 use utils::error::AppResult;
 
 use crate::dto::CreateProgram;
