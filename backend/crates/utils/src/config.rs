@@ -44,8 +44,7 @@ pub struct Config {
 impl Config {
     pub fn from_env() -> Self {
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-        let bind_addr =
-            std::env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8000".to_string());
+        let bind_addr = std::env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8000".to_string());
         let pool_max_size = std::env::var("POOL_MAX_SIZE")
             .ok()
             .and_then(|v| v.parse().ok())
@@ -54,8 +53,7 @@ impl Config {
             .unwrap_or_else(|_| "UAE Bakery Rewards".to_string());
 
         let auth0_domain = std::env::var("AUTH0_DOMAIN").expect("AUTH0_DOMAIN must be set");
-        let auth0_audience =
-            std::env::var("AUTH0_AUDIENCE").expect("AUTH0_AUDIENCE must be set");
+        let auth0_audience = std::env::var("AUTH0_AUDIENCE").expect("AUTH0_AUDIENCE must be set");
 
         let auth0_mgmt = Auth0MgmtConfig {
             client_id: std::env::var("AUTH0_MGMT_CLIENT_ID")
@@ -71,13 +69,16 @@ impl Config {
             api_key: std::env::var("ODOO_API_KEY").unwrap_or_default(),
         };
 
-        let consumer = ConsumerConfig { 
-            group_id: std::env::var("KAFKA_GROUP_ID").unwrap_or_else(|_| "1".to_string()), 
-            bootstrap_servers: std::env::var("KAFKA_BOOTSTRAP_SERVERS").expect("KAFKA_BOOTSTRAP_SERVERS must be set"), 
-            topics: std::env::var("KAFKA_TOPICS").expect("KAFKA_TOPICS must be set")
+        let consumer = ConsumerConfig {
+            group_id: std::env::var("KAFKA_GROUP_ID").unwrap_or_else(|_| "1".to_string()),
+            bootstrap_servers: std::env::var("KAFKA_BOOTSTRAP_SERVERS")
+                .expect("KAFKA_BOOTSTRAP_SERVERS must be set"),
+            topics: std::env::var("KAFKA_TOPICS")
+                .expect("KAFKA_TOPICS must be set")
                 .split(',')
                 .map(String::from)
-                .collect() };
+                .collect(),
+        };
 
         Self {
             database_url,
@@ -88,7 +89,7 @@ impl Config {
             auth0_audience,
             auth0_mgmt,
             odoo,
-            consumer
+            consumer,
         }
     }
 }

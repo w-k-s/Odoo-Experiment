@@ -110,7 +110,9 @@ impl Odoo {
             .and_then(|v| v.as_i64())
             .is_some();
         if !uid_present {
-            return Err(AppError::Internal("odoo auth: missing uid in response".into()));
+            return Err(AppError::Internal(
+                "odoo auth: missing uid in response".into(),
+            ));
         }
 
         let s = OdooSession { session_id };
@@ -118,7 +120,12 @@ impl Odoo {
         Ok(s)
     }
 
-    async fn call_kw(&self, model: &'static str, method: &'static str, args: Value) -> AppResult<Value> {
+    async fn call_kw(
+        &self,
+        model: &'static str,
+        method: &'static str,
+        args: Value,
+    ) -> AppResult<Value> {
         let s = self.session().await?;
 
         let req = JsonRpcRequest {
@@ -167,11 +174,35 @@ impl Crm for Odoo {
 
         let result = self.call_kw("res.partner", "create", args).await?;
 
-        let id = result
-            .as_i64()
-            .ok_or_else(|| AppError::Internal("odoo create_contact: unexpected response shape".into()))?;
+        let id = result.as_i64().ok_or_else(|| {
+            AppError::Internal("odoo create_contact: unexpected response shape".into())
+        })?;
 
-        tracing::info!(odoo_partner_id = id, member_ref = contact.member_ref, "odoo contact created");
+        tracing::info!(
+            odoo_partner_id = id,
+            member_ref = contact.member_ref,
+            "odoo contact created"
+        );
         Ok(ContactId(id.to_string()))
+    }
+
+    async fn update_contact_member_ref(
+        &self,
+        contact: &ContactId,
+        member_ref: &str,
+    ) -> AppResult<()> {
+        let id: i64 = contact.0.parse().map_err(|_| {
+            AppError::Internal("odoo update_contact_member_ref: invalid contact id".into())
+        })?;
+
+        let args = serde_json::json!([[id], { "ref": member_ref }]);
+        self.call_kw("res.partner", "write", args).await?;
+
+        tracing::info!(
+            odoo_partner_id = id,
+            member_ref,
+            "odoo contact member_ref updated"
+        );
+        Ok(())
     }
 }

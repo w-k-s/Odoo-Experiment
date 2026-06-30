@@ -4,7 +4,7 @@
 use crate::db::Pool;
 use crate::error::EngineResult;
 use crate::members::MemberService;
-use crate::models::{Member, OwnedSession, Program, Session};
+use crate::models::{Member, MemberId, OwnedSession, Program, Session, SessionId};
 use crate::programs::ProgramService;
 use crate::sessions::SessionService;
 
@@ -36,7 +36,7 @@ impl LoyaltyEngine for DbLoyaltyEngine {
 
     async fn create_member(&self, m: NewMember<'_>) -> EngineResult<Member> {
         self.members
-            .create(m.id, m.name, m.email, m.external_contact_id, m.program_id)
+            .create(m.name, m.email, m.external_contact_id, m.program_id)
             .await
     }
 
@@ -48,11 +48,11 @@ impl LoyaltyEngine for DbLoyaltyEngine {
         self.programs.ensure_default(name).await
     }
 
-    async fn create_session(&self, member_id: String) -> EngineResult<Session> {
+    async fn create_session(&self, member_id: MemberId) -> EngineResult<Session> {
         self.sessions.create(member_id).await
     }
 
-    async fn get_owned_session(&self, id: String) -> EngineResult<OwnedSession> {
+    async fn get_owned_session(&self, id: SessionId) -> EngineResult<OwnedSession> {
         self.sessions.get_owned(id).await
     }
 }

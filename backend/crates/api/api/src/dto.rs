@@ -46,7 +46,7 @@ pub struct MemberProfile {
 impl From<Member> for MemberProfile {
     fn from(m: Member) -> Self {
         Self {
-            member_id: m.id,
+            member_id: m.id.into(),
             name: m.name,
             email: m.email,
             points: m.points,

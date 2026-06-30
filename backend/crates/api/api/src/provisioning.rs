@@ -4,8 +4,7 @@
 use api_utils::state::AppState;
 use crm::NewContact;
 use loyalty::NewMember;
-use loyalty::ids::new_id;
-use loyalty::models::Member;
+use loyalty::models::{Member, ProgramId};
 use utils::error::{AppError, AppResult};
 
 pub async fn ensure_member(state: &AppState, sub: &str) -> AppResult<Member> {
@@ -19,24 +18,27 @@ pub async fn ensure_member(state: &AppState, sub: &str) -> AppResult<Member> {
         return Ok(existing);
     }
 
-    let member_id = new_id("mem");
+    let program_id: ProgramId = ProgramId::from(state.default_program_id.clone());
     let contact = state
         .crm
         .create_contact(NewContact {
             name: &name,
             email: &email,
-            member_ref: &member_id,
+            member_ref: None,
         })
         .await?;
     let member = state
         .loyalty
         .create_member(NewMember {
-            id: &member_id,
             name: &name,
             email: &email,
             external_contact_id: Some(&contact.0),
-            program_id: &state.default_program_id,
+            program_id: &program_id,
         })
+        .await?;
+    state
+        .crm
+        .update_contact_member_ref(&contact, &member.id.to_string())
         .await?;
     Ok(member)
 }

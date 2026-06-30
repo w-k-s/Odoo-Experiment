@@ -48,7 +48,9 @@ impl Auth0 {
 
     async fn mgmt_token(&self) -> AppResult<String> {
         let mut slot = self.token.lock().await;
-        if let Some(cached) = slot.as_ref() && cached.expires_at > Instant::now() {
+        if let Some(cached) = slot.as_ref()
+            && cached.expires_at > Instant::now()
+        {
             return Ok(cached.access_token.clone());
         }
 

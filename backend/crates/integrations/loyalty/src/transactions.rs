@@ -2,7 +2,7 @@ use diesel::prelude::*;
 
 use crate::db::Pool;
 use crate::error::EngineResult;
-use crate::models::{PointsTransaction, NewTransaction};
+use crate::models::{MemberId, NewTransaction, PointsTransaction, ProgramId};
 use bigdecimal::BigDecimal;
 
 #[derive(Clone)]
@@ -17,21 +17,20 @@ impl TransactionService {
 
     pub async fn create(
         &self,
-        id: &str,
-        member_id: &str,
-        program_id: &str,
+        member_id: MemberId,
+        program_id: ProgramId,
         source_order: &str,
         delta: i32,
         amount_total: BigDecimal,
     ) -> EngineResult<PointsTransaction> {
         let new = NewTransaction {
-            id: id.to_string(),
-            member_id: member_id.to_string(),
-            program_id: program_id.to_string(),
+            member_id,
+            program_id,
             source_system: "odoo".to_string(),
             source_order: source_order.to_string(),
             delta,
             amount_total,
+            ..Default::default()
         };
 
         let conn = self.pool.get().await?;
@@ -46,5 +45,4 @@ impl TransactionService {
             .await??;
         Ok(member)
     }
-
 }

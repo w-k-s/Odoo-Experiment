@@ -2,7 +2,7 @@ use diesel::prelude::*;
 
 use crate::db::Pool;
 use crate::error::EngineResult;
-use crate::models::{Member, NewMember};
+use crate::models::{Member, NewMember, ProgramId};
 
 #[derive(Clone)]
 pub struct MemberService {
@@ -32,18 +32,17 @@ impl MemberService {
 
     pub async fn create(
         &self,
-        id: &str,
         name: &str,
         email: &str,
         external_contact_id: Option<&str>,
-        program_id: &str,
+        program_id: &ProgramId,
     ) -> EngineResult<Member> {
         let new = NewMember {
-            id: id.to_string(),
-            program_id: program_id.to_string(),
+            program_id: program_id.clone(),
             name: name.to_string(),
             email: email.to_string(),
             external_contact_id: external_contact_id.map(str::to_string),
+            ..Default::default()
         };
 
         let conn = self.pool.get().await?;

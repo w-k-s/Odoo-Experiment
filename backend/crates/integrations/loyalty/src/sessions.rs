@@ -3,8 +3,7 @@ use diesel::prelude::*;
 
 use crate::db::Pool;
 use crate::error::{EngineError, EngineResult};
-use crate::ids::new_session_code;
-use crate::models::{Member, NewSession, OwnedSession, Session};
+use crate::models::{Member, MemberId, NewSession, OwnedSession, Session, SessionId};
 
 const SESSION_TTL_HOURS: i64 = 24;
 
@@ -18,11 +17,11 @@ impl SessionService {
         Self { pool }
     }
 
-    pub async fn create(&self, member_id: String) -> EngineResult<Session> {
+    pub async fn create(&self, member_id: MemberId) -> EngineResult<Session> {
         let new = NewSession {
-            id: new_session_code(),
             member_id,
             expires_at: Some(Utc::now() + Duration::hours(SESSION_TTL_HOURS)),
+            ..Default::default()
         };
 
         let conn = self.pool.get().await?;
@@ -38,7 +37,7 @@ impl SessionService {
         Ok(session)
     }
 
-    pub async fn get_owned(&self, id: String) -> EngineResult<OwnedSession> {
+    pub async fn get_owned(&self, id: SessionId) -> EngineResult<OwnedSession> {
         let conn = self.pool.get().await?;
         let owned = conn
             .interact(move |conn| -> EngineResult<OwnedSession> {

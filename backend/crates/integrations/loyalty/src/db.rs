@@ -1,5 +1,5 @@
 use deadpool_diesel::postgres::{Manager, Runtime};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 
 use crate::error::{EngineError, EngineResult};
 

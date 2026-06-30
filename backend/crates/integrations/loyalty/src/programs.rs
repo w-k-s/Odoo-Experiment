@@ -2,7 +2,6 @@ use diesel::prelude::*;
 
 use crate::db::Pool;
 use crate::error::EngineResult;
-use crate::ids::new_id;
 use crate::models::{NewProgram, Program};
 
 #[derive(Clone)]
@@ -21,8 +20,8 @@ impl ProgramService {
             .interact(move |conn| {
                 use crate::schema::loyalty_programs::dsl::loyalty_programs;
                 let new = NewProgram {
-                    id: new_id("prog"),
                     name,
+                    ..Default::default()
                 };
                 diesel::insert_into(loyalty_programs)
                     .values(&new)
@@ -49,18 +48,18 @@ impl ProgramService {
                     .optional()?;
 
                 if let Some(program) = existing {
-                    return Ok::<String, diesel::result::Error>(program.id);
+                    return Ok::<String, diesel::result::Error>(program.id.to_string());
                 }
 
                 let new = NewProgram {
-                    id: new_id("prog"),
                     name,
+                    ..Default::default()
                 };
                 let created: Program = diesel::insert_into(p::loyalty_programs)
                     .values(&new)
                     .returning(Program::as_returning())
                     .get_result(conn)?;
-                Ok(created.id)
+                Ok(created.id.to_string())
             })
             .await??;
         Ok(id)

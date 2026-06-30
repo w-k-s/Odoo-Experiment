@@ -1,11 +1,11 @@
+use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::Json;
 use jwt_authorizer::JwtClaims;
 
 use api_utils::auth::Claims;
 use api_utils::state::AppState;
-use loyalty::models::Session;
+use loyalty::models::{Session, SessionId};
 use utils::error::AppResult;
 
 use crate::dto::{SessionDetail, SessionMember};
@@ -29,14 +29,14 @@ pub async fn get_session(
 ) -> AppResult<Json<SessionDetail>> {
     let owned = state
         .loyalty
-        .get_owned_session(id)
+        .get_owned_session(SessionId::from(id))
         .await
         .inspect_err(|e| tracing::error!(error = %e, "failed to get owned session"))?;
     Ok(Json(SessionDetail {
-        session_id: owned.session_id,
+        session_id: owned.session_id.into(),
         status: owned.status,
         member: SessionMember {
-            id: owned.member.id,
+            id: owned.member.id.into(),
             name: owned.member.name,
             email: owned.member.email,
         },

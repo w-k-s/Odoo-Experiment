@@ -3,15 +3,15 @@ use std::sync::Arc;
 
 use api_utils::auth::build_authorizer;
 use api_utils::state::AppState;
-use auth::auth0::Auth0;
 use auth::IdentityProvider;
-use crm::odoo::Odoo;
+use auth::auth0::Auth0;
+use consumer::run;
 use crm::Crm;
-use loyalty::engine::DbLoyaltyEngine;
+use crm::odoo::Odoo;
 use loyalty::LoyaltyEngine;
 use loyalty::db;
+use loyalty::engine::DbLoyaltyEngine;
 use utils::config::Config;
-use consumer::run;
 
 #[tokio::main]
 async fn main() {
@@ -72,7 +72,7 @@ async fn main() {
     tracing::info!("loyalty backend listening on {addr}");
 
     tokio::spawn(async move {
-         tracing::error!("spawn");
+        tracing::error!("spawn");
         if let Err(e) = run(loyalty.clone(), config.consumer.clone()).await {
             tracing::error!("consumer exited with error: {e}");
         }

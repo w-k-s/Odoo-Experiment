@@ -1,11 +1,10 @@
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::Json;
 
 use api_utils::state::AppState;
-use loyalty::ids::new_id;
-use loyalty::models::Member;
 use loyalty::NewMember;
+use loyalty::models::{Member, ProgramId};
 use utils::error::AppResult;
 
 use crate::dto::CreateMember;
@@ -25,11 +24,10 @@ pub async fn create_member(
     let member = state
         .loyalty
         .create_member(NewMember {
-            id: &new_id("mem"),
             name: &body.name,
             email: &body.email,
             external_contact_id: None,
-            program_id: &program_id,
+            program_id: &ProgramId::from(program_id),
         })
         .await?;
     Ok((StatusCode::CREATED, Json(member)))

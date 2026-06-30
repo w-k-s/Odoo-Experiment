@@ -12,11 +12,15 @@ pub struct ContactId(pub String);
 pub struct NewContact<'a> {
     pub name: &'a str,
     pub email: &'a str,
-    /// Loyalty member reference to store on the CRM contact.
-    pub member_ref: &'a str,
+    pub member_ref: Option<&'a str>,
 }
 
 #[axum::async_trait]
 pub trait Crm: Send + Sync {
     async fn create_contact(&self, contact: NewContact<'_>) -> AppResult<ContactId>;
+    async fn update_contact_member_ref(
+        &self,
+        contact: &ContactId,
+        member_ref: &str,
+    ) -> AppResult<()>;
 }

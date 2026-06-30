@@ -1,35 +1,35 @@
-use rdkafka::{Message};
+use loyalty::LoyaltyEngine;
+use rdkafka::Message;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
+use rdkafka::consumer::stream_consumer::StreamConsumer;
 use rdkafka::consumer::{Consumer, DefaultConsumerContext};
-use rdkafka::consumer::stream_consumer::{StreamConsumer};
 use rdkafka::error::KafkaError;
 use rdkafka::message::Headers;
-use loyalty::{LoyaltyEngine};
+use std::sync::Arc;
 use tracing::{info, warn};
 use utils::config::ConsumerConfig;
-use std::sync::Arc;
 
 pub async fn run(
     _loyalty_engine: Arc<dyn LoyaltyEngine>,
-    consumer_config: ConsumerConfig
-) -> Result<(), KafkaError>{
+    consumer_config: ConsumerConfig,
+) -> Result<(), KafkaError> {
     info!("Running consumer");
     let mut config = ClientConfig::new();
 
-    config.set("group.id",&consumer_config.group_id)
-    .set("bootstrap.servers", &consumer_config.bootstrap_servers)
-    .set("auto.offset.reset", "earliest")
-    .set_log_level(RDKafkaLogLevel::Debug);
+    config
+        .set("group.id", &consumer_config.group_id)
+        .set("bootstrap.servers", &consumer_config.bootstrap_servers)
+        .set("auto.offset.reset", "earliest")
+        .set_log_level(RDKafkaLogLevel::Debug);
 
     let consumer: StreamConsumer<DefaultConsumerContext> = config.create()?;
     let topics: Vec<&str> = consumer_config.topics.iter().map(String::as_str).collect();
     consumer.subscribe(&topics)?;
 
-    loop{
-        match consumer.recv().await{
+    loop {
+        match consumer.recv().await {
             Err(e) => eprintln!("Kafka Error: {e}"),
             Ok(m) => {
-
                 info!(
                     "key: '{:?}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
                     m.key(),
@@ -45,8 +45,7 @@ pub async fn run(
                     }
                 }
 
-
-                // TODO: 
+                // TODO:
                 // 1. Match topic
                 // 2. Depending on topic, parse payload to approp type
                 // 3. Process payload
@@ -59,10 +58,9 @@ pub async fn run(
                         ""
                     }
                 };
-                
+
                 // consumer.commit_message(&m, CommitMode::Sync).unwrap();
             }
         }
     }
-
 }

@@ -1,5 +1,5 @@
-use axum::routing::{get, post};
 use axum::Router;
+use axum::routing::{get, post};
 use jwt_authorizer::{Authorizer, IntoLayer};
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
